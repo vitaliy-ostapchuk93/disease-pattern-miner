@@ -110,7 +110,10 @@ public class AlgorithmManager implements ServletContextListener {
     public void cancelAlg(int algID) {
         AlgorithmRunnable alg = algorithmsList.get(algID);
         alg.cancel();
-        algorithmFuture.get(algID).cancel(true);
+
+        if (algorithmFuture.containsKey(algID)) {
+            algorithmFuture.get(algID).cancel(true);
+        }
     }
 
     public void addAlgorithmRunnable(DataManager dataManager, DataFileManager resultsManager) {
