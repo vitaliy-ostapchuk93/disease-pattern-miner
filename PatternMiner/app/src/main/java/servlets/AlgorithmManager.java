@@ -169,10 +169,10 @@ public class AlgorithmManager implements ServletContextListener {
 
     public void createAlgorithTestSuite(DataManager dataManager, DataFileManager resultsManager) {
         //float[] minSupValues = {0.1f, 0.05f, 0.02f, 0.01f, 0.005f, 0.002f, 0.001f};
-        float[] minSupValues = {0.1f, 0.05f, 0.02f, 0.01f};
+        float[] minSupValues = {0.1f, 0.02f};
 
         for (AlgorithmType type : AlgorithmType.values()) {
-            if (type != AlgorithmType.UNKNOWN && type != AlgorithmType.Skopus && type != AlgorithmType.MG_FSM) {
+            if (type != AlgorithmType.UNKNOWN) {
                 //if (type == AlgorithmType.TKS || type == AlgorithmType.TSP || type == AlgorithmType.VMSP || type == AlgorithmType.AprioriClose) {
                 int counter = 0;
                 for (float minSup : minSupValues) {
