@@ -447,10 +447,10 @@ function create2DPlot_MinSupport(stats) {
             name: i
         };
 
-        let trace_reg = createReg(trace);
+        //let trace_reg = createReg(trace);
 
         dataMinSup.push(trace);
-        dataMinSup.push(trace_reg);
+        //dataMinSup.push(trace_reg);
     });
 
 
@@ -493,10 +493,10 @@ function create2DPlot_SeqCount(stats) {
             name: i
         };
 
-        let trace_reg = createReg(trace);
+        //let trace_reg = createReg(trace);
 
         dataSeqCount.push(trace);
-        dataSeqCount.push(trace_reg);
+        //dataSeqCount.push(trace_reg);
     });
 
 
