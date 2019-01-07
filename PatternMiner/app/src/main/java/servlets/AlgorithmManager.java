@@ -172,20 +172,20 @@ public class AlgorithmManager implements ServletContextListener {
 
     public void createAlgorithTestSuite(DataManager dataManager, DataFileManager resultsManager) {
         //float[] minSupValues = {0.1f, 0.05f, 0.02f, 0.01f, 0.005f, 0.002f, 0.001f};
-        float[] minSupValues = {0.1f, 0.02f};
+        //float[] minSupValues = {0.1f, 0.05f, 0.02f, 0.01f, 0.005f};
 
         for (AlgorithmType type : AlgorithmType.values()) {
             if (type != AlgorithmType.UNKNOWN) {
                 //if (type == AlgorithmType.TKS || type == AlgorithmType.TSP || type == AlgorithmType.VMSP || type == AlgorithmType.AprioriClose) {
                 int counter = 0;
-                for (float minSup : minSupValues) {
+                for (int i = 0; i < 5; i++) {
                     AlgorithmRunnable alg = new AlgorithmRunnable(algorithmsList.size(), type, dataManager.getGroupsFileSet(), resultsManager);
 
                     if (alg.getAlgorithmParameters().containsKey("Minimal Support")) {
-                        alg.getAlgorithmParameters().put("Minimal Support", minSup);
+                        alg.getAlgorithmParameters().put("Minimal Support", (float) (0.1 * (Math.pow(0.5, counter))));
                     }
                     if (alg.getAlgorithmParameters().containsKey("Minimal Support [rel.]")) {
-                        alg.getAlgorithmParameters().put("Minimal Support [rel.]", minSup);
+                        alg.getAlgorithmParameters().put("Minimal Support [rel.]", (float) (0.1 * (Math.pow(0.5, counter))));
                     }
                     if (alg.getAlgorithmParameters().containsKey("K")) {
                         alg.getAlgorithmParameters().put("K", (int) (10 * (Math.pow(1.5, counter))));
