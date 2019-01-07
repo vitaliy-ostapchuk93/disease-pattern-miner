@@ -36,6 +36,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stackblur-canvas/1.4.1/stackblur.min.js"></script>
     <!-- Main canvg code -->
     <script src="https://cdn.jsdelivr.net/npm/canvg/dist/browser/canvg.min.js"></script>
+
+    <script defer src="<c:url value="/resources/static/js/cursor.js"/>"></script>
 </head>
 
 <body>

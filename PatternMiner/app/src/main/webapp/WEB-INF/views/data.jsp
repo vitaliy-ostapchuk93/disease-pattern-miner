@@ -27,6 +27,8 @@
     <script defer src="<c:url value="/resources/static/js/jquery.multi-select.js"/>"></script>
     <link rel="stylesheet" type="text/css" href="<c:url value="/resources/static/css/multi-select.css"/>">
     <script defer src="<c:url value="/resources/static/js/datafile.js"/>"></script>
+
+    <script defer src="<c:url value="/resources/static/js/cursor.js"/>"></script>
 </head>
 
 <body>

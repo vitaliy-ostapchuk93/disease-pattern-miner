@@ -26,6 +26,7 @@
     <script src='https://unpkg.com/simple-statistics@6.1.1/dist/simple-statistics.min.js'></script>
 
     <script defer src="<c:url value="/resources/static/js/performance.js"/>"></script>
+    <script defer src="<c:url value="/resources/static/js/cursor.js"/>"></script>
 
 
 </head>
