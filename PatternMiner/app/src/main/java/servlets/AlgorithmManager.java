@@ -11,14 +11,17 @@ import javax.servlet.annotation.WebListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 @WebListener
 public class AlgorithmManager implements ServletContextListener {
 
     private final static Logger LOGGER = Logger.getLogger(AlgorithmManager.class.getName());
-    private ExecutorService executorService;
+    //private ExecutorService executorService;
     private ArrayList<AlgorithmRunnable> algorithmsList;
     private Map<Integer, Future> algorithmFuture;
 
@@ -26,7 +29,7 @@ public class AlgorithmManager implements ServletContextListener {
     public void contextInitialized(ServletContextEvent event) {
         LOGGER.info("AlgorithmManager started.");
 
-        executorService = Executors.newSingleThreadExecutor();
+        //executorService = Executors.newSingleThreadExecutor();
         algorithmsList = new ArrayList<>();
         algorithmFuture = new ConcurrentHashMap<>();
 
@@ -37,9 +40,10 @@ public class AlgorithmManager implements ServletContextListener {
     @Override
     public void contextDestroyed(ServletContextEvent event) {
         LOGGER.info("AlgorithmManager destroyed.");
+        cancelAll();
 
+        /*
         try {
-            cancelAll();
             executorService.shutdown();
             executorService.awaitTermination(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
@@ -51,7 +55,7 @@ public class AlgorithmManager implements ServletContextListener {
             executorService.shutdownNow();
             LOGGER.warning("shutdown finished");
         }
-
+        */
         algorithmsList.clear();
     }
 
@@ -62,7 +66,12 @@ public class AlgorithmManager implements ServletContextListener {
 
     private void executeAlgorithmRunnable(AlgorithmRunnable algorithm) {
         LOGGER.info("Running algorithm: #" + algorithm.getListID() + " of type " + algorithm.getAlgorithmType().name());
-        Future<?> future = executorService.submit(algorithm);
+        CompletableFuture<Void> future = CompletableFuture.runAsync(algorithm::run).orTimeout(60, TimeUnit.SECONDS)
+                .exceptionally(throwable -> {
+                    LOGGER.warning("An error occurred: " + throwable.getMessage());
+                    return null;
+                });
+        //Future<?> future = executorService.submit(algorithm);
         algorithmFuture.put(algorithm.getListID(), future);
     }
 
@@ -171,14 +180,11 @@ public class AlgorithmManager implements ServletContextListener {
     }
 
     public void createAlgorithTestSuite(DataManager dataManager, DataFileManager resultsManager) {
-        //float[] minSupValues = {0.1f, 0.05f, 0.02f, 0.01f, 0.005f, 0.002f, 0.001f};
-        //float[] minSupValues = {0.1f, 0.05f, 0.02f, 0.01f, 0.005f};
-
         for (AlgorithmType type : AlgorithmType.values()) {
             if (type != AlgorithmType.UNKNOWN) {
                 //if (type == AlgorithmType.TKS || type == AlgorithmType.TSP || type == AlgorithmType.VMSP || type == AlgorithmType.AprioriClose) {
                 int counter = 0;
-                for (int i = 0; i < 5; i++) {
+                for (int i = 0; i <= 5; i++) {
                     AlgorithmRunnable alg = new AlgorithmRunnable(algorithmsList.size(), type, dataManager.getGroupsFileSet(), resultsManager);
 
                     if (alg.getAlgorithmParameters().containsKey("Minimal Support")) {

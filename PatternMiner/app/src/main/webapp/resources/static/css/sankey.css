@@ -1,3 +1,12 @@
+.sankey {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+#sankey > div > div:nth-child(1) > div > svg {
+    overflow: visible;
+}
+
 .node rect {
     cursor: move;
     fill-opacity: .9;

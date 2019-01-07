@@ -16,7 +16,7 @@ public class TestFileBuilder {
         File input = new File("C:\\Users\\vital\\Desktop\\cd_all.csv");
         String outputDir = "C:\\Users\\vital\\Desktop\\";
         //int[] testFileSize = {20, 50, 100, 200, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 5000, 7500, 10000, 15000, 20000, 50000};
-        int[] testFileSize = {2500, 3000, 5000, 7500};
+        int[] testFileSize = {2500, 5000, 7500};
         for (int s : testFileSize) {
             int size = s * 1000;
             File output = new File(outputDir + "test" + s + "K.csv");

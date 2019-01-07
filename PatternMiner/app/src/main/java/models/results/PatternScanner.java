@@ -214,8 +214,8 @@ public class PatternScanner {
     }
 
     private void createIcdLinks(GroupDataFile dataFile) {
-        String[] keys = seqKey.split(" ");
-        Iterator<ICDSequence> icdSequenceIterator = List.copyOf(matchingSequences.get(dataFile)).iterator();
+        String[] keys = seqKey.replace("-1", "").replace("  ", " ").split(" ");
+        Iterator<ICDSequence> icdSequenceIterator = matchingSequences.get(dataFile).iterator();
         List<ICDLink> icdLinks = new ArrayList<>();
 
         while (icdSequenceIterator.hasNext()) {

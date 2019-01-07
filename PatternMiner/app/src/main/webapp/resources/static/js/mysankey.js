@@ -54,6 +54,8 @@ function drawChart(rows, colors, icdNames) {
     google.visualization.events.addListener(chart, 'onmouseover', function (event) {
         setTooltipContent(event, rows);
     });
+
+    $('svg').css("overflow", "visible");
 }
 
 function getTotalIn(data, name) {
