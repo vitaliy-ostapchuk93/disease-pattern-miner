@@ -20,9 +20,16 @@
             <a class="button has-background-link" style="border:none;"
                data-tooltip="${requestScope.MAPPER.getPatternFormatted(seq.key)}">
                 <div class="buttons has-addons">
-                    <c:forEach var='pattern' items='${requestScope.MAPPER.getPatternList(seq.key)}'>
-                        <span class="button"
-                              style="background-color: ${requestScope.DiagnosesGroupsHelper.getColorByGroup(pattern)}">${pattern}</span>
+                    <c:forEach var='item' items='${requestScope.MAPPER.getPatternList(seq.key)}'>
+                        <c:if test="${item eq '-1'}">
+                            <span class="button"
+                                  style="background-color: ${requestScope.DiagnosesGroupsHelper.getColorByGroup(item)}; border-right: 5px solid #3273dc; border-left: 5px solid #3273dc;">${item}</span>
+                        </c:if>
+                        <c:if test="${item ne '-1'}">
+                            <span class="button"
+                                  style="background-color: ${requestScope.DiagnosesGroupsHelper.getColorByGroup(item)}">${item}</span>
+                        </c:if>
+
                     </c:forEach>
                 </div>
             </a>
