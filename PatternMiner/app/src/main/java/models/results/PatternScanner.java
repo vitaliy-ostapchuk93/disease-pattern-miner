@@ -178,7 +178,7 @@ public class PatternScanner {
         this.pattern = Pattern.compile(ex.toString());
     }
 
-    public String sortedPattern() {
+    private String sortedPattern() {
         String expanded = seqKey + " -1 -2";
         String[] codes = expanded.split(" ");
         SortedSet<String> itemset = new TreeSet<>(Comparator.comparingInt(Integer::parseInt));
@@ -197,7 +197,9 @@ public class PatternScanner {
                 itemset.add(code);
             }
         }
-        return sortedCodes.toString();
+        String sorted = sortedCodes.toString();
+
+        return sorted;
     }
 
 

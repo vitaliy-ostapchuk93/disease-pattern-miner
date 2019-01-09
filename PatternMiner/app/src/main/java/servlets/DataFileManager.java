@@ -127,7 +127,7 @@ public class DataFileManager implements ServletContextListener, DataFileListener
             counter++;
         }
 
-        return sortedCodes.toString();
+        return sortedCodes.toString().trim();
     }
 
     public ResultsMapper getMapper() {
