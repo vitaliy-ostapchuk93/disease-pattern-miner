@@ -14,9 +14,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -93,7 +91,7 @@ public class DataFileManager implements ServletContextListener, DataFileListener
                         Set<String> seqSet = new HashSet<>(Arrays.asList(seq.split(" ")));
                         seqSet.remove("-1");
                         if (seqSet.size() > 2) {
-                            mapper.addEntry(seq, dataFile.getGenderGroup(), dataFile.getAgeGroup(), dataFile, sup);
+                            mapper.addEntry(sortedPattern(seq), dataFile.getGenderGroup(), dataFile.getAgeGroup(), dataFile, sup);
                         }
                     } catch (Exception e) {
                         LOGGER.warning("Some Error during filling mapper: " + e.getMessage());
@@ -106,6 +104,30 @@ public class DataFileManager implements ServletContextListener, DataFileListener
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private String sortedPattern(String pattern) {
+        String[] codes = (pattern + " -1").split(" ");
+        SortedSet<String> itemset = new TreeSet<>(Comparator.comparingInt(Integer::parseInt));
+        StringBuilder sortedCodes = new StringBuilder();
+
+        int counter = 0;
+        for (String code : codes) {
+            if (code.equals("-1")) {
+                for (String item : itemset) {
+                    sortedCodes.append(item).append(" ");
+                }
+                if (counter != codes.length - 1) {
+                    sortedCodes.append("-1").append(" ");
+                }
+                itemset.clear();
+            } else {
+                itemset.add(code);
+            }
+            counter++;
+        }
+
+        return sortedCodes.toString();
     }
 
     public ResultsMapper getMapper() {

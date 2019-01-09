@@ -11,17 +11,14 @@ import javax.servlet.annotation.WebListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.logging.Logger;
 
 @WebListener
 public class AlgorithmManager implements ServletContextListener {
 
     private final static Logger LOGGER = Logger.getLogger(AlgorithmManager.class.getName());
-    //private ExecutorService executorService;
+    private ExecutorService executorService;
     private ArrayList<AlgorithmRunnable> algorithmsList;
     private Map<Integer, Future> algorithmFuture;
 
@@ -29,7 +26,7 @@ public class AlgorithmManager implements ServletContextListener {
     public void contextInitialized(ServletContextEvent event) {
         LOGGER.info("AlgorithmManager started.");
 
-        //executorService = Executors.newSingleThreadExecutor();
+        executorService = Executors.newSingleThreadExecutor();
         algorithmsList = new ArrayList<>();
         algorithmFuture = new ConcurrentHashMap<>();
 
@@ -42,7 +39,6 @@ public class AlgorithmManager implements ServletContextListener {
         LOGGER.info("AlgorithmManager destroyed.");
         cancelAll();
 
-        /*
         try {
             executorService.shutdown();
             executorService.awaitTermination(5, TimeUnit.SECONDS);
@@ -55,7 +51,7 @@ public class AlgorithmManager implements ServletContextListener {
             executorService.shutdownNow();
             LOGGER.warning("shutdown finished");
         }
-        */
+
         algorithmsList.clear();
     }
 
@@ -66,12 +62,14 @@ public class AlgorithmManager implements ServletContextListener {
 
     private void executeAlgorithmRunnable(AlgorithmRunnable algorithm) {
         LOGGER.info("Running algorithm: #" + algorithm.getListID() + " of type " + algorithm.getAlgorithmType().name());
+        /*
         CompletableFuture<Void> future = CompletableFuture.runAsync(algorithm::run).orTimeout(60, TimeUnit.SECONDS)
                 .exceptionally(throwable -> {
                     LOGGER.warning("An error occurred: " + throwable.getMessage());
                     return null;
                 });
-        //Future<?> future = executorService.submit(algorithm);
+        */
+        Future<?> future = executorService.submit(algorithm);
         algorithmFuture.put(algorithm.getListID(), future);
     }
 

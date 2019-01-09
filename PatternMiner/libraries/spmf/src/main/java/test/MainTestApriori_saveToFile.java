@@ -15,10 +15,10 @@ public class MainTestApriori_saveToFile {
 
     public static void main(String[] arg) throws IOException {
 
-        String input = fileToPath("contextPasquier99.txt");
-        String output = ".//output.txt";  // the path for saving the frequent itemsets found
+        String input = "C:\\Users\\vital\\Desktop\\Auslandssemester\\disease-pattern-miner\\PatternMiner\\libraries\\spmf\\src\\main\\java\\test\\contextPasquier99.txt";
+        String output = "C:\\Users\\vital\\Desktop\\Auslandssemester\\disease-pattern-miner\\PatternMiner\\libraries\\spmf\\src\\main\\java\\test\\output_a.txt";  // the path for saving the frequent itemsets found
 
-        double minsup = 0.4; // means a minsup of 2 transaction (we used a relative support)
+        double minsup = 0.5; // means a minsup of 2 transaction (we used a relative support)
 
         // Applying the Apriori algorithm
         AlgoApriori algo = new AlgoApriori();

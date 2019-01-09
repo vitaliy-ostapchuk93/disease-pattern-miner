@@ -11,7 +11,12 @@
 <article class="tile is-child notification is-dark">
     <h1 class="title">ICD Group-Codes</h1>
 
-    <div class="field is-grouped is-grouped-multiline">
+    <button class="button" id="toggleICD"
+            style="position: absolute; right: .5rem; top: .5rem; border-radius: 290486px;">
+        <i class="fa fas fa-chevron-circle-down"></i>
+    </button>
+
+    <div class="field is-grouped is-grouped-multiline targetICD">
 
         <div class="control">
             <div class="tags has-addons is-medium">

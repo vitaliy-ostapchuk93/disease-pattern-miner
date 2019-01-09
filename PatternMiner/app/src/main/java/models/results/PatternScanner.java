@@ -158,27 +158,7 @@ public class PatternScanner {
 
 
     private void createRegex() {
-        String expanded = seqKey + " -1 -2";
-
-        String[] codes = expanded.split(" ");
-        SortedSet<String> itemset = new TreeSet<>(Comparator.comparingInt(Integer::parseInt));
-        StringBuilder sortedCodes = new StringBuilder();
-
-        for (String code : codes) {
-            if (code.equals("-1")) {
-                for (String item : itemset) {
-                    sortedCodes.append(item).append(" ");
-                }
-                itemset.clear();
-            }
-            if (code.equals("-2")) {
-                sortedCodes.append("-1 -2");
-            } else {
-                itemset.add(code);
-            }
-        }
-
-        String sortedSeqKey = sortedCodes.toString();
+        String sortedSeqKey = sortedPattern();
 
         // build regex
         StringBuilder ex = new StringBuilder();
@@ -197,6 +177,29 @@ public class PatternScanner {
         LOGGER.info("Builded regex pattern > " + ex.toString());
         this.pattern = Pattern.compile(ex.toString());
     }
+
+    public String sortedPattern() {
+        String expanded = seqKey + " -1 -2";
+        String[] codes = expanded.split(" ");
+        SortedSet<String> itemset = new TreeSet<>(Comparator.comparingInt(Integer::parseInt));
+        StringBuilder sortedCodes = new StringBuilder();
+
+        for (String code : codes) {
+            if (code.equals("-1")) {
+                for (String item : itemset) {
+                    sortedCodes.append(item).append(" ");
+                }
+                itemset.clear();
+            }
+            if (code.equals("-2")) {
+                sortedCodes.append("-1 -2");
+            } else {
+                itemset.add(code);
+            }
+        }
+        return sortedCodes.toString();
+    }
+
 
     public Set<ICDLink> getIcdLinks(GroupDataFile dataFile) {
         if (pattern == null) {

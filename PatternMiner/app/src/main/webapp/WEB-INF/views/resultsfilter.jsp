@@ -10,8 +10,14 @@
 
 <article class="tile is-child notification is-dark">
     <h1 class="title">Results Filter</h1>
+
+    <button class="button" id="toggleFilter"
+            style="position: absolute; right: .5rem; top: .5rem; border-radius: 290486px;">
+        <i class="fa fas fa-chevron-circle-down"></i>
+    </button>
+
     <article class="media">
-        <div class="media-content">
+        <div class="media-content targetFilter">
 
             <div class="columns is-multiline">
                 <c:forEach var="filter" items="${requestScope.MAPPER.filterList}" varStatus="loop">

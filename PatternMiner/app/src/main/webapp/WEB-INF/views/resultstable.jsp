@@ -24,7 +24,7 @@
             </div>
         </h2>
 
-        <table class="table is-fullwidth is-striped is-hoverable is-gapless sortable" id="resultsTable">
+        <table class="table fixed_header is-fullwidth is-striped is-hoverable is-gapless sortable" id="resultsTable">
             <thead>
             <tr>
                 <th><a class="button" style="border:none;">#</a></th>

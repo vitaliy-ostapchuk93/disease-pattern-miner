@@ -1,4 +1,14 @@
 $(document).ready(function () {
+
+
+    $("#toggleICD").click(function () {
+        $(".targetICD").toggle('slow');
+    });
+
+    $("#toggleFilter").click(function () {
+        $(".targetFilter").toggle('slow');
+    });
+
     $('#save-results').on("click", function () {
         $.ajax({
             url: "resultsdownload",

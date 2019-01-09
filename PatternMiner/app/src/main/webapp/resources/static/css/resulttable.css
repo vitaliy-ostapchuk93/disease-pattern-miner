@@ -1,3 +1,31 @@
 table.sortable th:not(.sorttable_sorted):not(.sorttable_sorted_reverse):not(.sorttable_nosort):after {
     content: " \25B4\25BE"
 }
+
+.fixed_header {
+    width: 400px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.fixed_header tbody {
+    display: block;
+    overflow: auto;
+    height: 200px;
+    width: 100%;
+}
+
+.fixed_header thead {
+    background: black;
+    color: #fff;
+}
+
+.fixed_header th, .fixed_header td {
+    padding: 5px;
+    text-align: left;
+    width: 200px;
+}
+
+.fixed_header thead tr {
+    display: block;
+}
