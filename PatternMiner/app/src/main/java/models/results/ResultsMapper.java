@@ -28,14 +28,14 @@ public class ResultsMapper {
     private int highestPatternLength;
 
     private List<ResultsFilter> filterList;
-    private Map<String, PatternScanner> patternScannerMap;
+    private QueueLinkedMap<String, PatternScanner> patternScannerMap;
 
     public ResultsMapper() {
         LOGGER.setLevel(Level.INFO);
 
         this.resultsTable = TreeBasedTable.create();
         this.filterList = new ArrayList<>();
-        this.patternScannerMap = new ConcurrentHashMap<>();
+        this.patternScannerMap = new QueueLinkedMap<>(5);
     }
 
     public TreeBasedTable<String, GenderAgeGroup, ResultsEntry> getResultsTable() {
@@ -594,15 +594,13 @@ public class ResultsMapper {
         return patternScannerMap;
     }
 
-    public void setPatternScannerMap(Map<String, PatternScanner> patternScannerMap) {
-        this.patternScannerMap = patternScannerMap;
-    }
-
     public PatternScanner getPatternScanner(String patternKey) {
         if (!patternScannerMap.containsKey(patternKey)) {
-            patternScannerMap.put(patternKey, new PatternScanner(patternKey));
+            patternScannerMap.add(patternKey, new PatternScanner(patternKey));
         }
 
         return patternScannerMap.get(patternKey);
     }
+
+
 }

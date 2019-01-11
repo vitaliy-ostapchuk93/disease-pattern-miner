@@ -1,5 +1,9 @@
+var time_id;
+const LOADING_CONTENT = 'Loading...';
+
 $(document).ready(function () {
-    const LOADING_CONTENT = 'Loading...';
+
+    var timeoutId;
 
     $('.cell').hover(
         function () {
@@ -14,24 +18,33 @@ $(document).ready(function () {
             cell.css({'border-style': 'solid', 'border-color': '#3273dc'});
             tooltip.html(LOADING_CONTENT);
 
+            if (!timeoutId) {
+                timeoutId = window.setTimeout(function () {
+                    timeoutId = null;
 
-            $.ajax({
-                url: "resultscell",
-                data: params,
-                dataType: 'json',
-                success: function (response) {
-                    tooltip.html(response);
-                },
-                error: function (jqXHR, status, err) {
-                    if (jqXHR.responseText) {
-                        tooltip.html(jqXHR.responseText);
-                    } else {
-                        tooltip.html("<p>Fail to fetch cell data!</p>");
-                    }
-                }
-            });
+                    $.ajax({
+                        url: "resultscell",
+                        data: params,
+                        dataType: 'json',
+                        success: function (response) {
+                            tooltip.html(response);
+                        },
+                        error: function (jqXHR, status, err) {
+                            if (jqXHR.responseText) {
+                                tooltip.html(jqXHR.responseText);
+                            } else {
+                                tooltip.html("<p>Fail to fetch cell data!</p>");
+                            }
+                        }
+                    });
+                }, 1000);
+            }
 
         }, function () {
+            if (timeoutId) {
+                window.clearTimeout(timeoutId);
+                timeoutId = null;
+            }
             $(this).css({'border-style': 'none'});
         }
     );
