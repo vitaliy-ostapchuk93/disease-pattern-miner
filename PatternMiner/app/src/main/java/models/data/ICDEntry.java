@@ -4,13 +4,14 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 
-public class ICDEntry {
+public class ICDEntry implements Serializable {
     private final DateTime date;
     private final List<ICDCode> icdCodes;
 

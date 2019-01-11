@@ -181,8 +181,7 @@ public class AlgorithmManager implements ServletContextListener {
         for (AlgorithmType type : AlgorithmType.values()) {
             if (type != AlgorithmType.UNKNOWN) {
                 //if (type == AlgorithmType.TKS || type == AlgorithmType.TSP || type == AlgorithmType.VMSP || type == AlgorithmType.AprioriClose) {
-                int counter = 0;
-                for (int i = 0; i <= 5; i++) {
+                for (int counter = 5; counter <= 5; counter++) {
                     AlgorithmRunnable alg = new AlgorithmRunnable(algorithmsList.size(), type, dataManager.getGroupsFileSet(), resultsManager);
 
                     if (alg.getAlgorithmParameters().containsKey("Minimal Support")) {
@@ -195,7 +194,6 @@ public class AlgorithmManager implements ServletContextListener {
                         alg.getAlgorithmParameters().put("K", (int) (10 * (Math.pow(1.5, counter))));
                     }
                     addAlgorithmRunnable(alg);
-                    counter++;
                 }
             }
         }

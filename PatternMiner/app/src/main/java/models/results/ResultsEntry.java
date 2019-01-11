@@ -36,11 +36,9 @@ public class ResultsEntry implements Comparable<ResultsEntry>, Serializable {
         return (GroupDataFile) getSeqFileOfResult().getParentDataFile();
     }
 
-
     public float getRelSupportValue() {
         return supportValue * 1.0f / getSequenceCountOfInputFile();
     }
-
 
     public String getTooltipStats() {
         StringBuilder tooltip = new StringBuilder();

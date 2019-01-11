@@ -33,13 +33,6 @@ public class QueueLinkedMap<K, V> extends LinkedHashMap<K, V> {
         return (Map.Entry<K, V>) tail.get(map);
     }
 
-    public void add(K key, V value) {
-        this.put(key, value);
-        if (this.size() > maxSize) {
-            removeHead();
-        }
-    }
-
     public Map.Entry<K, V> getFirst() {
         return getFirst(this);
     }

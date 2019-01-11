@@ -8,6 +8,7 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.apache.commons.math3.stat.inference.TestUtils;
 
+import javax.servlet.ServletContext;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -28,6 +29,7 @@ public class ResultsMapper {
     private int highestPatternLength;
 
     private List<ResultsFilter> filterList;
+
     private QueueLinkedMap<String, PatternScanner> patternScannerMap;
 
     public ResultsMapper() {
@@ -428,12 +430,18 @@ public class ResultsMapper {
     }
 
 
-    public JSONObject getIcdLinksAsJSON(String pattern, Gender gender, int ageValue) {
+    public JSONObject getIcdLinksAsJSON(String pattern, Gender gender, int ageValue, ServletContext servletContext) {
         JSONObject jsonObject = new JSONObject();
 
         LinkedHashSet<ICDCode> codes = new LinkedHashSet<>();
 
-        Map<ICDLink, int[]> icdLinksMap = createLinksCountMap(pattern);
+        Map<ICDLink, int[]> icdLinksMap;
+        if (!patternScannerMap.get(pattern).getIcdLinksCountMap().isEmpty()) {
+            icdLinksMap = patternScannerMap.get(pattern).getIcdLinksCountMap();
+        } else {
+            icdLinksMap = createLinksCountMap(pattern, servletContext);
+            patternScannerMap.get(pattern).setIcdLinksCountMap(icdLinksMap);
+        }
 
         JSONArray jsonLinks = new JSONArray();
 
@@ -491,13 +499,13 @@ public class ResultsMapper {
     }
 
 
-    private Map<ICDLink, int[]> createLinksCountMap(String pattern) {
+    private Map<ICDLink, int[]> createLinksCountMap(String pattern, ServletContext servletContext) {
         Map<ICDLink, int[]> icdLinksCountMap = new ConcurrentHashMap<>();
 
         resultsTable.row(pattern).forEach((group, entry) -> {
             int linkColumn = getColumnValue(group.getAgeGroup(), group.getGender());
 
-            Set<ICDLink> links = getPatternScanner(pattern).getIcdLinks(entry.getGroupFileOfResult());
+            Set<ICDLink> links = getPatternScanner(pattern).getIcdLinks(entry.getGroupFileOfResult(), servletContext);
 
             for (ICDLink link : links) {
                 if (!icdLinksCountMap.containsKey(link)) {
@@ -508,45 +516,6 @@ public class ResultsMapper {
         });
 
         return icdLinksCountMap;
-    }
-
-    private void createIcdLinks(String pattern) {
-        ThreadGroup gfg = new ThreadGroup("IcdLinksSearch");
-        SortedMap<GenderAgeGroup, ResultsEntry> entries = resultsTable.row(pattern);
-
-        for (ResultsEntry resultsEntry : entries.values()) {
-            new Thread(gfg, () -> getPatternScanner(pattern).scanForMatchingSequences(resultsEntry.getGroupFileOfResult())).start();
-            //getIcdLinks(resultsEntry.getGroupFileOfResult())).start();
-        }
-
-        while (gfg.activeCount() != 0) {
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        System.out.println(entries);
-    }
-
-
-    private JSONArray convertLinksToJSON(Map<ICDLink, Integer> icdLinkValues) {
-        JSONArray links = new JSONArray();
-        LinkedHashSet<String> nodes = new LinkedHashSet<>();
-
-        for (Map.Entry<ICDLink, Integer> linkEntry : icdLinkValues.entrySet()) {
-            nodes.add(linkEntry.getKey().getSource().getSmallCode());
-            nodes.add(linkEntry.getKey().getTarget().getSmallCode());
-
-            JSONObject link = new JSONObject();
-            link.put("source", linkEntry.getKey().getSource().getSmallCode());
-            link.put("target", linkEntry.getKey().getTarget().getSmallCode());
-            link.put("value", linkEntry.getValue());
-            links.add(link);
-        }
-
-        return links;
     }
 
 
@@ -596,9 +565,12 @@ public class ResultsMapper {
 
     public PatternScanner getPatternScanner(String patternKey) {
         if (!patternScannerMap.containsKey(patternKey)) {
-            patternScannerMap.add(patternKey, new PatternScanner(patternKey));
-        }
+            patternScannerMap.put(patternKey, new PatternScanner(patternKey));
 
+            if (patternScannerMap.size() > patternScannerMap.getMaxSize()) {
+                patternScannerMap.removeHead();
+            }
+        }
         return patternScannerMap.get(patternKey);
     }
 

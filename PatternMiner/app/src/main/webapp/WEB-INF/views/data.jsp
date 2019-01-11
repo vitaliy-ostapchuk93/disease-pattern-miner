@@ -53,9 +53,11 @@
                                             <i class="fas fa-upload"></i>
                                         </span>
                                         <span class="file-label is-centered">
-                                            Choose some Main-File(s) for upload ...
+                                            Choose some MainData-File(s) for upload ...
                                         </span>
                                     </span>
+                                    OR
+
                                 </label>
                             </div>
                         </div>

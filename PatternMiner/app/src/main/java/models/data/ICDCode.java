@@ -1,5 +1,8 @@
 package models.data;
-public class ICDCode implements Comparable<ICDCode> {
+
+import java.io.Serializable;
+
+public class ICDCode implements Comparable<ICDCode>, Serializable {
 
     private final DiagnosesGroup group;
     private final String code;

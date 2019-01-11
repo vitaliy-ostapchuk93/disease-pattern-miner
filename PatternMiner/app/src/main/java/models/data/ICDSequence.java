@@ -3,9 +3,10 @@ package models.data;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class ICDSequence {
+public class ICDSequence implements Serializable {
 
     private final static int DAYS_IN_BETWEEN = 14;
 
@@ -278,4 +279,13 @@ public class ICDSequence {
     }
 
 
+    public String getAllIcdCodesString() {
+        String codes = "";
+
+        for (ICDCode code : getAllIcdCodes()) {
+            codes += code.getSmallCode() + " ";
+        }
+
+        return codes.trim();
+    }
 }

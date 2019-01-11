@@ -52,7 +52,7 @@ public class ResultsCellServlet extends HttpServlet {
 
             LOGGER.info("Fetched scanner and file: " + scanner + " | " + file);
             if (file != null) {
-                writer.append(scanner.scanForPattern(file));
+                writer.append(scanner.scanForCommonICDCodes(this.getServletContext(), file));
             }
         }
     }

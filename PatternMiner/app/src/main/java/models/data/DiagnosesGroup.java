@@ -1,6 +1,8 @@
 package models.data;
 
-public enum DiagnosesGroup {
+import java.io.Serializable;
+
+public enum DiagnosesGroup implements Serializable {
     InfectiousAndParasiticDiseases,
     Neoplasms,
     EndocrineNutritionalAndMetabolicDiseasesAndImmunityDisorders,

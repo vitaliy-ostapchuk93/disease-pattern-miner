@@ -34,6 +34,7 @@ public class DataManager implements ServletContextListener, DataFileListener {
         ctx.setAttribute("DataManager", this);
     }
 
+
     /**
      * Create initial DataFile set when context initialized.
      *

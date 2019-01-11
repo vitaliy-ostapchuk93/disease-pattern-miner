@@ -3,8 +3,10 @@ package models.results;
 import models.data.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
+import org.uncommons.maths.statistics.EmptyDataSetException;
 
-import java.io.IOException;
+import javax.servlet.ServletContext;
+import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,43 +16,100 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static java.util.Comparator.comparing;
+
 public class PatternScanner {
 
     private final static Logger LOGGER = Logger.getLogger(PatternScanner.class.getName());
+
     private String seqKey;
     private Pattern pattern;
 
-    private Map<DataFile, List<ICDSequence>> matchingSequences;
-    private Map<DataFile, Set<ICDLink>> icdLinksMap;
-
+    private Map<String, List<ICDSequence>> matchingSequecesMap;
+    private Map<String, Set<ICDLink>> icdLinksMap;
+    private Map<ICDLink, int[]> icdLinksCountMap;
 
     public PatternScanner(String seqKey) {
         this.seqKey = seqKey;
-        this.matchingSequences = new ConcurrentHashMap<>();
+        createRegex();
+
+        this.matchingSequecesMap = new ConcurrentHashMap<>();
         this.icdLinksMap = new ConcurrentHashMap<>();
+        this.icdLinksCountMap = new ConcurrentHashMap<>();
 
         LOGGER.setLevel(Level.INFO);
     }
 
 
-    public String scanForPattern(GroupDataFile dataFile) {
-        LOGGER.info("Scanning " + dataFile.getName() + " for pattern ( " + seqKey + " )");
-
-        if (pattern == null) {
-            createRegex();
+    public String scanForCommonICDCodes(ServletContext servletContext, GroupDataFile dataFile) {
+        List<ICDSequence> matchingSequences = getMatchingSequences(servletContext, dataFile);
+        if (!matchingSequences.isEmpty()) {
+            return buildPatternsResultString(matchingSequences);
+        } else {
+            throw new EmptyDataSetException();
         }
-        if (!matchingSequences.containsKey(dataFile)) {
-            scanForMatchingSequences(dataFile);
-            LOGGER.info("Found " + matchingSequences.get(dataFile).size() + " sequences mathching the pattern ( " + seqKey + " )");
-        }
-
-        if (!getMatchingCodesMap(dataFile).isEmpty()) {
-            return buildPatternsResultString(dataFile);
-        }
-        return "Error! No matching patterns found...";
     }
 
-    private String buildPatternsResultString(GroupDataFile dataFile) {
+    public List<ICDSequence> getMatchingSequences(ServletContext servletContext, GroupDataFile dataFile) {
+        if (!matchingSequecesMap.containsKey(dataFile.getName())) {
+            String pathToScans = ResultsDataFile.DIR_PATH + File.separator + "scan_ " + seqKey;
+            String realPathToScans = servletContext.getRealPath(pathToScans);
+            String scanName = dataFile.getName().replace(".csv", ".icds").replace("_sorted", "");
+
+            File patternScanDir = new File(realPathToScans);
+            patternScanDir.mkdirs();
+            File[] scanFiles = patternScanDir.listFiles();
+
+            if (patternScanDir.exists() && scanFiles != null && scanFiles.length != 0) {
+                for (File scanFile : scanFiles) {
+                    if (scanFile.getName().equals(scanName)) {
+                        LOGGER.info("Found serialized matchingSeq (" + seqKey + ")  list for " + scanFile.getName());
+                        return desirializeMatchingSequences(scanFile);
+                    }
+                }
+            }
+
+            LOGGER.info("Creating matching sequences (" + seqKey + ") for " + dataFile.getName());
+            createMatchingSequences(patternScanDir, dataFile, scanName);
+        }
+        return matchingSequecesMap.get(dataFile.getName());
+    }
+
+    private void createMatchingSequences(File patternScanDir, GroupDataFile dataFile, String scanName) {
+        List<ICDSequence> icdSequences = scanForMatchingSequences(dataFile);
+        serializeMatchingSequences(patternScanDir, icdSequences, scanName);
+        matchingSequecesMap.put(dataFile.getName(), icdSequences);
+    }
+
+
+    private void serializeMatchingSequences(File patternScanDir, List<ICDSequence> icdSequences, String scanName) {
+        try {
+            FileOutputStream fileOut = new FileOutputStream(patternScanDir.getAbsolutePath() + File.separator + scanName);
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(icdSequences);
+            out.close();
+            fileOut.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private List<ICDSequence> desirializeMatchingSequences(File scanFile) {
+        List<ICDSequence> icdSequences = Collections.emptyList();
+        try {
+            FileInputStream fileInputStream = new FileInputStream(scanFile);
+            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+            icdSequences = (List<ICDSequence>) objectInputStream.readObject();
+            objectInputStream.close();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return icdSequences;
+    }
+
+    private String buildPatternsResultString(List<ICDSequence> matchingSequences) {
         StringBuilder patterns = new StringBuilder("<b>Pattern Code-Search [ICD-9 Code | SUP] :</b> <br>");
 
         for (String key : seqKey.split(" ")) {
@@ -61,12 +120,13 @@ public class PatternScanner {
                 patterns.append("</div>");
                 patterns.append("<div class=\"field is-grouped is-grouped-multiline\">");
 
-                Map<ICDCode, Integer> topTen = getMatchingCodesMap(dataFile).get(Integer.parseInt(key)).entrySet().stream()
+
+                Map<ICDCode, Integer> topTen = getMatchingCodesMap(matchingSequences).get(Integer.parseInt(key)).entrySet().stream()
                         .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(10)
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
                 for (Map.Entry<ICDCode, Integer> code : topTen.entrySet()) {
-                    float p = code.getValue() * 100.0f / matchingSequences.get(dataFile).size();
+                    float p = code.getValue() * 100.0f / matchingSequences.size();
                     if (p >= 5) {
                         patterns.append("<div class=\"control\">");
                         patterns.append("<div class=\"tags has-addons\">");
@@ -91,14 +151,12 @@ public class PatternScanner {
         return patterns.toString();
     }
 
-    private Map<Integer, Map<ICDCode, Integer>> getMatchingCodesMap(GroupDataFile dataFile) {
+    private Map<Integer, Map<ICDCode, Integer>> getMatchingCodesMap(List<ICDSequence> matchingSequences) {
         Map<Integer, Map<ICDCode, Integer>> matchingCodesMap = new HashMap<>();
+        String[] keys = seqKey.split(" ");
 
-        Iterator<ICDSequence> iterator = matchingSequences.get(dataFile).iterator();
-
-        while (iterator.hasNext()) {
-            ICDSequence sequence = iterator.next();
-            for (String key : seqKey.split(" ")) {
+        for (ICDSequence sequence : matchingSequences) {
+            for (String key : keys) {
                 int group = Integer.parseInt(key);
                 if (!matchingCodesMap.containsKey(Integer.parseInt(key))) {
                     matchingCodesMap.put(group, new HashMap<>());
@@ -115,8 +173,8 @@ public class PatternScanner {
         return matchingCodesMap;
     }
 
-    public void scanForMatchingSequences(GroupDataFile dataFile) {
-        matchingSequences.put(dataFile, new ArrayList<>());
+    public List<ICDSequence> scanForMatchingSequences(GroupDataFile dataFile) {
+        List<ICDSequence> matchingSequences = new ArrayList<>();
 
         try {
             LineIterator it = FileUtils.lineIterator(dataFile, "UTF-8");
@@ -137,7 +195,7 @@ public class PatternScanner {
 
                         Matcher m = pattern.matcher(formatedSeq);
                         if (m.find()) {
-                            matchingSequences.get(dataFile).add(sequence);
+                            matchingSequences.add(sequence);
                         }
                     }
 
@@ -154,6 +212,8 @@ public class PatternScanner {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return matchingSequences;
     }
 
 
@@ -178,7 +238,7 @@ public class PatternScanner {
         this.pattern = Pattern.compile(ex.toString());
     }
 
-    private String sortedPattern() {
+    public String sortedPattern() {
         String expanded = seqKey + " -1 -2";
         String[] codes = expanded.split(" ");
         SortedSet<String> itemset = new TreeSet<>(Comparator.comparingInt(Integer::parseInt));
@@ -203,24 +263,17 @@ public class PatternScanner {
     }
 
 
-    public Set<ICDLink> getIcdLinks(GroupDataFile dataFile) {
-        if (pattern == null) {
-            createRegex();
+    public Set<ICDLink> getIcdLinks(GroupDataFile dataFile, ServletContext servletContext) {
+        if (!icdLinksMap.containsKey(dataFile.getName())) {
+            createIcdLinks(dataFile, servletContext);
         }
-        if (!matchingSequences.containsKey(dataFile)) {
-            scanForMatchingSequences(dataFile);
-            LOGGER.info("Found " + matchingSequences.get(dataFile).size() + " sequences mathching the pattern ( " + seqKey + " )");
-        }
-        if (!icdLinksMap.containsKey(dataFile)) {
-            createIcdLinks(dataFile);
-        }
-
-        return icdLinksMap.get(dataFile);
+        return icdLinksMap.get(dataFile.getName());
     }
 
-    private void createIcdLinks(GroupDataFile dataFile) {
+
+    private void createIcdLinks(GroupDataFile dataFile, ServletContext servletContext) {
         String[] keys = seqKey.replace("-1", "").replace("  ", " ").split(" ");
-        Iterator<ICDSequence> icdSequenceIterator = matchingSequences.get(dataFile).iterator();
+        Iterator<ICDSequence> icdSequenceIterator = getMatchingSequences(servletContext, dataFile).iterator();
         List<ICDLink> icdLinks = new ArrayList<>();
 
         while (icdSequenceIterator.hasNext()) {
@@ -248,6 +301,21 @@ public class PatternScanner {
             }
         }
 
-        icdLinksMap.put(dataFile, new HashSet<>(icdLinks));
+        Set<ICDLink> limitedLinks = icdLinks.stream()
+                .sorted(comparing(ICDLink::getCount, comparing(Math::abs)).reversed())
+                .limit(100)
+                .filter(icdLink -> icdLink.getCount() < 10)
+                .collect(Collectors.toSet());
+
+        icdLinksMap.put(dataFile.getName(), limitedLinks);
     }
+
+    public Map<ICDLink, int[]> getIcdLinksCountMap() {
+        return icdLinksCountMap;
+    }
+
+    public void setIcdLinksCountMap(Map<ICDLink, int[]> icdLinksCountMap) {
+        this.icdLinksCountMap = icdLinksCountMap;
+    }
+
 }

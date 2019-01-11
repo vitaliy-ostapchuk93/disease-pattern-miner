@@ -26,9 +26,8 @@ public class PatternExplorerServlet extends HttpServlet {
         }
         if (request.getParameter("patternGroupKey") != null) {
             GenderAgeGroup group = new GenderAgeGroup(request.getParameter("patternGroupKey"));
-            int ageValue = group.getAgeGroup() * 10;
             request.setAttribute("patternGender", group.getGender());
-            request.setAttribute("ageValue", ageValue);
+            request.setAttribute("ageValue", group.getAgeGroup() * 10);
         }
 
         RequestDispatcher dispatcher = this.getServletContext().getRequestDispatcher("/WEB-INF/views/explorer.jsp");

@@ -2,17 +2,14 @@ package models.data;
 
 import models.algorithm.AlgorithmType;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
 
-public abstract class DataFile extends File {
+public abstract class DataFile extends File implements Serializable {
 
     protected final static Logger LOGGER = Logger.getLogger(DataFile.class.getSimpleName());
 

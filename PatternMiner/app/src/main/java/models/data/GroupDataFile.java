@@ -6,7 +6,6 @@ import java.util.logging.Logger;
 public class GroupDataFile extends DataFile {
     private final static Logger LOGGER = Logger.getLogger(GroupDataFile.class.getName());
 
-
     public final static String DIR_PATH = "/resources/datasets/input/csv/groups/";
     protected boolean selected;
 

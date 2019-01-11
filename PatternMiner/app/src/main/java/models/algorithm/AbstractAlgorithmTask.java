@@ -23,6 +23,7 @@ public abstract class AbstractAlgorithmTask {
         this.algorithmParameters = initialAlgorithmParameters();
     }
 
+
     abstract DataFile miningTask(GroupDataFile groupFile);
 
     abstract Map<String, Object> initialAlgorithmParameters();
