@@ -411,7 +411,7 @@ public class ResultsMapper {
                 formattedSeq += DiagnosesGroup.values()[Integer.parseInt(key)].name() + " | ";
             }
         }
-        return formattedSeq.substring(0, formattedSeq.length() - 3);
+        return formattedSeq;
     }
 
     public String[] getPatternList(String pattern) {

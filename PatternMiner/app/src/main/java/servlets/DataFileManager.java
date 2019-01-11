@@ -1,6 +1,7 @@
 package servlets;
 
 import models.data.DataFile;
+import models.data.DiagnosesGroupHelper;
 import models.data.Gender;
 import models.data.ResultsDataFile;
 import models.results.DataFileListener;
@@ -122,7 +123,11 @@ public class DataFileManager implements ServletContextListener, DataFileListener
                 }
                 itemset.clear();
             } else {
-                itemset.add(code);
+                if (code.length() >= 3) {
+                    itemset.add(String.valueOf(DiagnosesGroupHelper.parseCode(code).ordinal()));
+                } else {
+                    itemset.add(code);
+                }
             }
             counter++;
         }
