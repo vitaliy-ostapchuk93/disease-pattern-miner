@@ -303,8 +303,8 @@ public class PatternScanner {
 
         Set<ICDLink> limitedLinks = icdLinks.stream()
                 .sorted(comparing(ICDLink::getCount, comparing(Math::abs)).reversed())
-                .limit(100)
                 .filter(icdLink -> icdLink.getCount() < 10)
+                .limit(150)
                 .collect(Collectors.toSet());
 
         icdLinksMap.put(dataFile.getName(), limitedLinks);
