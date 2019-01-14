@@ -60,7 +60,6 @@ public class DataFileManager implements ServletContextListener, DataFileListener
         mapper.setInitialized(true);
     }
 
-
     /**
      * Fill the mapper with a given result data file.
      *

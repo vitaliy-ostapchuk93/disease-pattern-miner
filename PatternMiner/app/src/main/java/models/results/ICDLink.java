@@ -2,30 +2,16 @@ package models.results;
 
 import models.data.ICDCode;
 
-public class ICDLink implements Comparable<ICDLink> {
+import java.io.Serializable;
+
+public class ICDLink implements Serializable {
 
     private ICDCode nodeSource;
     private ICDCode nodeTarget;
-    private int count;
 
     public ICDLink(ICDCode nodeSource, ICDCode nodeTo) {
         this.nodeSource = nodeSource;
         this.nodeTarget = nodeTo;
-        this.count = 0;
-    }
-
-
-    public int getCount() {
-        return count;
-    }
-
-    public void addCount() {
-        this.count = this.count + 1;
-    }
-
-    @Override
-    public int compareTo(ICDLink obj) {
-        return Integer.compare(this.count, obj.count);
     }
 
     @Override

@@ -1,29 +1,31 @@
-.sankey {
-    padding-top: 10px;
-    padding-bottom: 10px;
-}
-
-#sankey > div > div:nth-child(1) > div > svg {
-    overflow: visible;
-}
-
 .node rect {
     cursor: move;
-    fill-opacity: .9;
     shape-rendering: crispEdges;
 }
 
 .node text {
     pointer-events: none;
-    text-shadow: 0 1px 0 #fff;
+    text-shadow: 1px 1px 2px #fff;
+    font-size: 0.8em;
+    font-family: sans-serif;
 }
 
-.link {
-    fill: none;
-    stroke: #000;
-    stroke-opacity: .2;
+#tooltip {
+    position: absolute;
+    pointer-events: none;
+    font-size: 0.7em;
+    font-family: sans-serif;
+    padding: 3px;
+    width: auto;
+    height: auto;
+    background-color: #F2F2F2;
+    -webkit-box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.4);
+    -mox-box-shadow: 0px 0px 0px 5px rgba(0, 0, 0, 0.4);
+    box-shadow: 0px 0px 5px rbga(0, 0, 0, 0.4);
+    pointer-events: none;
 }
 
-.link:hover {
-    stroke-opacity: .5;
+.value {
+    white-space: pre-line;
+    margin: 0;
 }

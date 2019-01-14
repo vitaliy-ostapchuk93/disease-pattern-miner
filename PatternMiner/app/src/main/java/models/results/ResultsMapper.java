@@ -3,14 +3,13 @@ package models.results;
 import com.google.common.collect.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import models.data.*;
-import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.apache.commons.math3.stat.inference.TestUtils;
 
 import javax.servlet.ServletContext;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
@@ -429,54 +428,6 @@ public class ResultsMapper {
         return resultsTable.get(seqKey, new GenderAgeGroup(groupKey));
     }
 
-
-    public JSONObject getIcdLinksAsJSON(String pattern, Gender gender, int ageValue, ServletContext servletContext) {
-        JSONObject jsonObject = new JSONObject();
-
-        LinkedHashSet<ICDCode> codes = new LinkedHashSet<>();
-
-        Map<ICDLink, int[]> icdLinksMap;
-        if (!patternScannerMap.get(pattern).getIcdLinksCountMap().isEmpty()) {
-            icdLinksMap = patternScannerMap.get(pattern).getIcdLinksCountMap();
-        } else {
-            icdLinksMap = createLinksCountMap(pattern, servletContext);
-            patternScannerMap.get(pattern).setIcdLinksCountMap(icdLinksMap);
-        }
-
-        JSONArray jsonLinks = new JSONArray();
-
-        int ageLowerGroupValue = ageValue / 10;
-        int ageInterpolationValue = ageValue % 10;
-        int linkColumn = getColumnValue(ageLowerGroupValue, gender);
-
-        LOGGER.info("Creating response object for the links.");
-        icdLinksMap.forEach((key, value) -> {
-            int countValue = 0;
-            if (ageLowerGroupValue == 9) {
-                countValue = value[linkColumn];
-            } else {
-                countValue = interpolate(value[linkColumn], value[linkColumn + 1], ageInterpolationValue / 10.0f);
-            }
-
-            if (countValue >= 1) {
-                codes.add(key.getSource());
-                codes.add(key.getTarget());
-
-                JSONObject link = new JSONObject();
-                link.put("source", key.getSource().getSmallCode());
-                link.put("target", key.getTarget().getSmallCode());
-                link.put("value", countValue);
-                jsonLinks.add(link);
-            }
-        });
-
-
-        jsonObject.put("links", jsonLinks);
-        jsonObject.put("colors", getIcdColors(codes));
-
-        return jsonObject;
-    }
-
     private List<String> getIcdColors(LinkedHashSet<ICDCode> codes) {
         List<String> colors = new ArrayList<>();
         LOGGER.info("Creating response object for the link-colors.");
@@ -497,27 +448,6 @@ public class ResultsMapper {
     private int interpolate(double entryLower, double entryHigher, float v) {
         return (int) (entryLower + v * (entryHigher - entryLower));
     }
-
-
-    private Map<ICDLink, int[]> createLinksCountMap(String pattern, ServletContext servletContext) {
-        Map<ICDLink, int[]> icdLinksCountMap = new ConcurrentHashMap<>();
-
-        resultsTable.row(pattern).forEach((group, entry) -> {
-            int linkColumn = getColumnValue(group.getAgeGroup(), group.getGender());
-
-            Set<ICDLink> links = getPatternScanner(pattern).getIcdLinks(entry.getGroupFileOfResult(), servletContext);
-
-            for (ICDLink link : links) {
-                if (!icdLinksCountMap.containsKey(link)) {
-                    icdLinksCountMap.put(link, new int[20]);
-                }
-                icdLinksCountMap.get(link)[linkColumn] = link.getCount();
-            }
-        });
-
-        return icdLinksCountMap;
-    }
-
 
     public String tTestGenderDifference(String seqKey) {
         SortedMap<GenderAgeGroup, ResultsEntry> row = resultsTable.row(seqKey);
@@ -570,9 +500,26 @@ public class ResultsMapper {
             if (patternScannerMap.size() > patternScannerMap.getMaxSize()) {
                 patternScannerMap.removeHead();
             }
+
         }
         return patternScannerMap.get(patternKey);
     }
 
 
+    public JsonObject getIcdLinksData(String patternKey, ServletContext servletContext) {
+        PatternScanner patternScanner = getPatternScanner(patternKey);
+
+        for (ResultsEntry entry : resultsTable.row(patternKey).values()) {
+            patternScanner.createInverseSearchFiles(servletContext, entry);
+        }
+
+        return patternScanner.getCompleteIcdLinksJSON(resultsTable.row(patternKey), servletContext);
+    }
+
+    public void createFullICDLinksFiles(ServletContext servletContext) {
+        for (Table.Cell<String, GenderAgeGroup, ResultsEntry> cell : resultsTable.cellSet()) {
+            PatternScanner patternScanner = getPatternScanner(cell.getRowKey());
+            patternScanner.createInverseSearchFiles(servletContext, cell);
+        }
+    }
 }

@@ -22,7 +22,7 @@
             <div class="tags has-addons is-medium">
                 <span class="tag is-medium"
                       style="background-color: ${requestScope.DiagnosesGroupsHelper.getColorByGroup(-1)}">-1</span>
-                <span class="tag is-medium">TIME_GAP ( <= 2 weeks)</span>
+                <span class="tag is-medium">TIME_GAP ( >= 2 weeks)</span>
             </div>
         </div>
 

@@ -18,26 +18,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css">
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 
-    <script src="https://unpkg.com/tippy.js@3/dist/tippy.all.min.js"></script>
-
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-
-    <script src="https://www.gstatic.com/charts/loader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.5/jspdf.min.js"></script>
 
-    <script src="https://unpkg.com/tippy.js@3/dist/tippy.all.min.js"></script>
 
     <link rel="stylesheet" type="text/css" href="<c:url value="/resources/static/css/sankey.css"/>"/>
-
-
-    <!-- Required to convert named colors to RGB -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/1.4/rgbcolor.min.js"></script>
-    <!-- Optional if you want blur -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stackblur-canvas/1.4.1/stackblur.min.js"></script>
-    <!-- Main canvg code -->
-    <script src="https://cdn.jsdelivr.net/npm/canvg/dist/browser/canvg.min.js"></script>
-
     <script defer src="<c:url value="/resources/static/js/cursor.js"/>"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/balloon-css/0.5.0/balloon.min.css">
+    <link rel="stylesheet" type="text/css" href="<c:url value="/resources/static/css/tooltip.css"/>"/>
+    <script src="https://unpkg.com/tippy.js@3/dist/tippy.all.min.js"></script>
+
 </head>
 
 <body>
@@ -126,11 +117,13 @@
                         </article>
                     </div>
 
-                    <div class="tile is-vertical has-background-white">
+                    <div class="tile is-vertical has-background-white has-text-black-bis">
                         <br>
+                        <div id="chart" class="is-fullwidth"></div>
 
-                        <div id="sankey" style="width: 100%; height: 800px; margin: 0 auto"></div>
-                        <script defer src="<c:url value="/resources/static/js/mysankey.js"/>"></script>
+                        <script src="http://d3js.org/d3.v3.min.js"></script>
+                        <script src="https://cdn.rawgit.com/Neilos/bihisankey/master/bihisankey.js"></script>
+                        <script src="<c:url value="/resources/static/js/sankey.js"/>"></script>
 
                         <div class="column">
                             <h2 class="subtitle has-text-danger">Due to interpolation and different size of

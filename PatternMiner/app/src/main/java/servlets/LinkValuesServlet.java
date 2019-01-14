@@ -40,8 +40,8 @@ public class LinkValuesServlet extends HttpServlet {
             obj.put("icdNamesMap", diagnosesGroupHelper.createIcdNamesMap(this.getServletContext()));
 
 
-            JSONObject jsonLinks = resultsManager.getMapper().getIcdLinksAsJSON(patternKey, group.getGender(), ageValue, this.getServletContext());
-            obj.put("icdLinks", jsonLinks);
+            //JSONObject jsonLinks = resultsManager.getMapper().getIcdLinksAsJSON(patternKey, group.getGender(), ageValue, this.getServletContext());
+            //obj.put("icdLinks", jsonLinks);
 
             response.getWriter().write(obj.toJSONString());
         }

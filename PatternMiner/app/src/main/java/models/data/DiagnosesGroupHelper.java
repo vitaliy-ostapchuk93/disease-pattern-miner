@@ -1,5 +1,7 @@
 package models.data;
 
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
 import models.results.HSLColor;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
@@ -56,6 +58,17 @@ public class DiagnosesGroupHelper {
         return icdNames;
     }
 
+    public static String getColorByGroup(DiagnosesGroup group) {
+        float hueValue;
+        if (group == DiagnosesGroup.TIME_GAP) {
+            hueValue = 0;
+        } else {
+            float h = 1.0f * (group.ordinal() + 1) / (getDiagnosesGroups().size() - 1);
+            hueValue = h + (240.0f * h);
+        }
+        String hex = '#' + Integer.toHexString((HSLColor.toRGB(hueValue, 100, 80).getRGB() & 0xffffff) | 0x1000000).substring(1);
+        return hex;
+    }
 
     public static int lookupMin(DiagnosesGroup group) throws ICDLookupException {
         switch (group) {
@@ -199,16 +212,64 @@ public class DiagnosesGroupHelper {
         return groups;
     }
 
-    public static String getColorByGroup(int group) {
-        float hueValue;
-        if (group == -1) {
-            hueValue = 0;
+    public static String getColorByGroup(int g) {
+        DiagnosesGroup group = null;
+        if (g == -1) {
+            group = DiagnosesGroup.TIME_GAP;
         } else {
-            float h = 1.0f * (getDiagnosesGroups().indexOf(DiagnosesGroup.values()[group]) + 1) / (getDiagnosesGroups().size() - 1);
-            hueValue = h + (240.0f * h);
+            group = DiagnosesGroup.values()[g];
         }
-        String hex = '#' + Integer.toHexString((HSLColor.toRGB(hueValue, 100, 80).getRGB() & 0xffffff) | 0x1000000).substring(1);
-        return hex;
+        return getColorByGroup(group);
+    }
+
+    public JsonObject createIcdNodesList(ServletContext ctx) {
+        JsonObject nodes = new JsonObject();
+
+        for (DiagnosesGroup group : DiagnosesGroup.values()) {
+            JsonObject node = new JsonObject();
+
+            node.addProperty("id", group.ordinal());
+            node.addProperty("name", group.name());
+            node.addProperty("type", group.name());
+            node.add("parent", JsonNull.INSTANCE);
+
+            nodes.add(String.valueOf(group.ordinal()), node);
+        }
+
+
+        String icdPath = ctx.getRealPath(ICD9_CSV_FILE_PATH);
+        File icdFile = new File(icdPath);
+
+        try {
+            LineIterator it = FileUtils.lineIterator(icdFile, "UTF-8");
+
+            while (it.hasNext()) {
+                List<String> line = parseLine(it.nextLine());
+
+                String code = line.get(0).trim().replaceAll("\"", "");
+
+                if (code.length() == 3) {
+                    String name = line.get(2).trim().replaceAll("\"", "");
+
+                    JsonObject node = new JsonObject();
+
+                    node.addProperty("id", code);
+                    node.addProperty("name", name);
+                    node.addProperty("type", parseCode(code).name());
+                    node.addProperty("parent", parseCode(code).ordinal());
+
+                    if (!name.isEmpty() && parseCode(code) != DiagnosesGroup.UNKNOWN) {
+                        nodes.add(code, node);
+                    }
+                }
+            }
+
+            it.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return nodes;
     }
 
 

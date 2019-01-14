@@ -1,4 +1,3 @@
-var time_id;
 const LOADING_CONTENT = 'Loading...';
 
 $(document).ready(function () {

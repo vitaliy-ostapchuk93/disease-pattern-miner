@@ -1,5 +1,6 @@
 package models.data;
 
+import models.results.ICDLink;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 
@@ -132,7 +133,7 @@ public class ICDSequence implements Serializable {
     }
 
     public List<SortedSet<DiagnosesGroup>> getSequenceOfItemsets() {
-        return getSequenceOfItemsets(14);
+        return getSequenceOfItemsets(DAYS_IN_BETWEEN);
     }
 
     public List<SortedSet<DiagnosesGroup>> getSequenceOfItemsets(int daysInBetween) {
@@ -165,7 +166,7 @@ public class ICDSequence implements Serializable {
     }
 
     public String getFormatedCodes() {
-        return getFormatedCodes(14);
+        return getFormatedCodes(DAYS_IN_BETWEEN);
     }
 
     public String getFormatedCodes(int daysInBetween) {
@@ -182,7 +183,7 @@ public class ICDSequence implements Serializable {
     }
 
     public List<List<String>> getSequenceOfItemsetCodes() {
-        return getSequenceOfItemsetCodes(14);
+        return getSequenceOfItemsetCodes(DAYS_IN_BETWEEN);
     }
 
     public List<List<String>> getSequenceOfItemsetCodes(int daysInBetween) {
@@ -217,7 +218,7 @@ public class ICDSequence implements Serializable {
     }
 
     public Set<ICDCode> getCodesMatchingGroup(int key) {
-        return getCodesMatchingGroup(key, 14);
+        return getCodesMatchingGroup(key, DAYS_IN_BETWEEN);
     }
 
     public Set<ICDCode> getCodesMatchingGroup(int key, int daysInBetween) {
@@ -287,5 +288,74 @@ public class ICDSequence implements Serializable {
         }
 
         return codes.trim();
+    }
+
+    public List<ICDLink> getIcdLinks() {
+        List<ICDLink> icdLinks = new ArrayList<>();
+
+        /*
+        List<SortedSet<ICDCode>> sortedICDCodeItemsets = getSortedICDCodeItemsets(DAYS_IN_BETWEEN);
+
+        for (int cItemset = 0; cItemset < sortedICDCodeItemsets.size()-1; cItemset++) {
+            SortedSet<ICDCode> currentItemset = sortedICDCodeItemsets.get(cItemset);
+
+            for (int nItemset = cItemset+1; nItemset < sortedICDCodeItemsets.size(); nItemset++) {
+                SortedSet<ICDCode> nextItemset = sortedICDCodeItemsets.get(nItemset);
+
+                HashSet<ICDCode> targetItemset = new HashSet<>();
+                targetItemset.addAll(currentItemset);
+                targetItemset.addAll(nextItemset);
+
+                for (ICDCode sourceItem: currentItemset) {
+                    for (ICDCode targetItem: targetItemset) {
+                        if (sourceItem != targetItem) {
+                            icdLinks.add(new ICDLink(sourceItem, targetItem));
+                        }
+                    }
+                }
+            }
+        }
+        */
+
+        for (int current = 0; current < diagnoses.size(); current++) {
+            ICDEntry currentEntry = diagnoses.get(current);
+            Set<ICDCode> currentEntrySet = currentEntry.getFilteredCodes();
+            Set<ICDCode> visited = new HashSet<>();
+
+            //connect all entrys since they have same date
+            for (ICDCode currentCode : currentEntrySet) {
+                Set<ICDCode> otherCodes = new HashSet<>(currentEntrySet);
+                otherCodes.remove(currentCode);
+                otherCodes.removeAll(visited);
+
+                for (ICDCode otherCode : otherCodes) {
+                    if (!currentCode.equals(otherCode)) {
+                        icdLinks.add(new ICDLink(currentCode, otherCode));
+                    }
+                }
+                visited.add(currentCode);
+            }
+
+
+            //connect with future entries
+            for (int future = current; future < diagnoses.size(); future++) {
+                ICDEntry futureEntry = diagnoses.get(future);
+
+                if (Days.daysBetween(currentEntry.getDate(), futureEntry.getDate()).getDays() <= DAYS_IN_BETWEEN) {
+                    Set<ICDCode> futureEntrySet = futureEntry.getFilteredCodes();
+
+                    for (ICDCode source : currentEntrySet) {
+                        for (ICDCode target : futureEntrySet) {
+                            if (!source.equals(target)) {
+                                icdLinks.add(new ICDLink(source, target));
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+
+        return icdLinks;
     }
 }
