@@ -49,7 +49,7 @@ public class ResultsFilter {
         this.filterTopNGroups = 20;
         this.filterTopNAll = 100;
 
-        this.filterTopPGroups = 5.0f;
+        this.filterTopPGroups = 3.0f;
         this.filterTopPAll = 5.0f;
 
         this.filterGroupsCount = 1;

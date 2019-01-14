@@ -196,7 +196,7 @@
                     </span>
                     <span class="tag is-link is-medium">
                         <input type="range" name="topPSupGroupSlider" id="topPSupGroupSlider"
-                               oninput='this.form.submit()' min="1" max="25" step="0.1"
+                               oninput='this.form.submit()' min="0.01" max="10" step="0.01"
                                value="${requestScope.filter.filterTopPGroups}">
                     </span>
                     <br>

@@ -121,8 +121,8 @@
                         <br>
                         <div id="chart" class="is-fullwidth"></div>
 
-                        <script src="http://d3js.org/d3.v3.min.js"></script>
                         <script src="https://cdn.rawgit.com/Neilos/bihisankey/master/bihisankey.js"></script>
+                        <script src="<c:url value="/resources/static/js/d3.v3.min.js"/>"></script>
                         <script src="<c:url value="/resources/static/js/sankey.js"/>"></script>
 
                         <div class="column">
