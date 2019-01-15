@@ -56,8 +56,6 @@
                                             Choose some MainData-File(s) for upload ...
                                         </span>
                                     </span>
-                                    OR
-
                                 </label>
                             </div>
                         </div>

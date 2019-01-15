@@ -111,13 +111,10 @@
 
                         <article class="tile is-child notification is-one-quarter">
                             <div class="field">
-                                <label class="label">Export as PNG</label>
+                                <label class="label">Export</label>
                                 <a id="downloadPNG" download="_.png">
                                     <button class="button is-link" id="save-png" disabled>Save as IMG</button>
                                 </a>
-                            </div>
-                            <div class="field">
-                                <label class="label">Export as JSON</label>
                                 <a id="downloadJSON" download="_.json">
                                     <button class="button is-link" id="save-json" disabled>Save as JSON</button>
                                 </a>
