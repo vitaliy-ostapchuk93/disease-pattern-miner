@@ -40,7 +40,7 @@ public class DataManager implements ServletContextListener, DataFileListener {
      *
      * @param ctx
      */
-    private void createDataFileSet(ServletContext ctx) {
+    public void createDataFileSet(ServletContext ctx) {
         this.mainFileSet = new HashSet<>();
         Set<String> resourcePathsMain = ctx.getResourcePaths(MainDataFile.DIR_PATH);
 

@@ -475,7 +475,7 @@ function update() {
                 .style("opacity", 1).select(".value")
                 .text(function () {
                     var additionalInstructions = g.children.length ? "\n(Double click to expand)" : "\n(Double click to colapse)";
-                    return g.name + "\nSupport: " + formatFlow(g.netFlow) + additionalInstructions;
+                    return formatIcdCode(g) + g.name + "\nSupport: " + formatFlow(g.netFlow) + additionalInstructions;
                 });
         }
     });

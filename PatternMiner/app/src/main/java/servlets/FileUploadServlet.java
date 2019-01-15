@@ -38,7 +38,7 @@ public class FileUploadServlet extends HttpServlet {
     }
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        LOGGER.info("Upload File Directory=" + filePath);
+        LOGGER.info("Upload File Directory is " + filePath);
 
         isMultipart = ServletFileUpload.isMultipartContent(request);
 

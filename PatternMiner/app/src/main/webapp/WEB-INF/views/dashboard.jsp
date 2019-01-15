@@ -30,9 +30,9 @@
                 <section class="section">
                     <div class="columns">
                         <div class="column">
-                            <h1 class="title is-1"><b>Disease Pattern Miner</b> is a free, open-source mining-framework
-                                for
-                                discovering sequential patterns in medical health records.</h1>
+                            <h1 class="title is-1"><b class="is-uppercase">Disease Pattern Miner</b> <br>
+                                is a free, open-source mining-framework for
+                                discovering sequential patterns in medical health record datasets.</h1>
                             <br>
                             <nav class="coulums">
                                 <a class="button is-dark is-large"

@@ -15,4 +15,26 @@ $(document).ready(function () {
         }
     });
 
+    /*
+    $('#fileUpload').on('change', function (event) {
+        $.ajax({
+            url: '/upload',
+            data: $('#file').attr('files'),
+            cache: false,
+            contentType: 'multipart/form-data',
+            processData: false,
+            type: 'POST',
+            success: function (data) {
+                alert(data);
+            }
+        });
+    });
+    */
+
+    $('#downloadExternal').on('click', function (event) {
+        let params = {"externalURL": $("#externalURL").val()};
+        $.post("/externalSource", $.param(params), function (response) {
+            alert(response);
+        })
+    })
 });

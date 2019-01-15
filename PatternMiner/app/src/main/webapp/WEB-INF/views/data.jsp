@@ -37,48 +37,14 @@
 
     <section class="hero">
         <div class="hero-body">
-            <div class="tile is-parent">
-                <article class="tile is-child notification is-dark is-multiline">
-                    <p class="title">Manage & Select the data</p>
+            <div class="tile">
+                <div class="tile is-parent is-vertical">
 
+                    <jsp:include page="datasource.jsp"/>
 
-                    <form method="post" action="upload" enctype="multipart/form-data">
-                        <div class="field">
-                            <div class="file is-fullwidth is-centered is-success ">
-                                <label class="file-label">
-                                    <input class="file-input" type="file" id="file_upload" name="file_upload"
-                                           multiple="false" onchange="this.form.submit()">
-                                    <span class="file-cta">
-                                        <span class="file-icon">
-                                            <i class="fas fa-upload"></i>
-                                        </span>
-                                        <span class="file-label is-centered">
-                                            Choose some MainData-File(s) for upload ...
-                                        </span>
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
-                    </form>
+                    <jsp:include page="dataselect.jsp"/>
 
-
-                    <select id="optData" multiple="multiple">
-
-                        <c:forEach var="file" items="${requestScope.DATAFILES}" varStatus="loop">
-                            <optgroup label="${file.name}">
-                                <c:forEach var="childfile" items="${file.sortedChildFiles}" varStatus="loop">
-                                    <option value="${childfile.name}"
-                                            <c:if test="${childfile.selected == true}">selected</c:if> >${childfile.getGendederAgeGroup()}
-                                        - ${childfile.name} - ${childfile.getLengthInMB()} MB
-                                    </option>
-                                </c:forEach>
-                            </optgroup>
-                        </c:forEach>
-
-                    </select>
-
-
-                </article>
+                </div>
             </div>
         </div>
     </section>
