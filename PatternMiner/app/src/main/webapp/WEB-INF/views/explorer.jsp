@@ -29,6 +29,8 @@
     <link rel="stylesheet" type="text/css" href="<c:url value="/resources/static/css/tooltip.css"/>"/>
     <script src="https://unpkg.com/tippy.js@3/dist/tippy.all.min.js"></script>
 
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/0.10.0/lodash.min.js"></script>
+
 </head>
 
 <body>
@@ -109,9 +111,15 @@
 
                         <article class="tile is-child notification is-one-quarter">
                             <div class="field">
-                                <label class="label">Export</label>
-                                <a id="download" download="_.png">
+                                <label class="label">Export as PNG</label>
+                                <a id="downloadPNG" download="_.png">
                                     <button class="button is-link" id="save-png" disabled>Save as IMG</button>
+                                </a>
+                            </div>
+                            <div class="field">
+                                <label class="label">Export as JSON</label>
+                                <a id="downloadJSON" download="_.json">
+                                    <button class="button is-link" id="save-json" disabled>Save as JSON</button>
                                 </a>
                             </div>
                         </article>

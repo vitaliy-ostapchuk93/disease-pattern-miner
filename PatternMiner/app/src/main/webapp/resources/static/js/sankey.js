@@ -1,4 +1,5 @@
 'use strict';
+document.body.style.cursor = 'wait';
 
 var svg, tooltip, biHiSankey, path, defs, colorScale, highlightColorScale, isTransitioning;
 
@@ -29,6 +30,7 @@ var icdGroups = (function () {
     return groups;
 })();
 
+var container = $('#chart');
 
 var OPACITY = {
         NODE_DEFAULT: 0.9,
@@ -54,13 +56,23 @@ var OPACITY = {
         TOP: 2 * (COLLAPSER.RADIUS + OUTER_MARGIN),
         RIGHT: OUTER_MARGIN,
         BOTTOM: OUTER_MARGIN,
-        LEFT: OUTER_MARGIN
+        LEFT: OUTER_MARGIN * 2
     },
     TRANSITION_DURATION = 40,
-    HEIGHT = 700 - MARGIN.TOP - MARGIN.BOTTOM,
-    WIDTH = 1700 - MARGIN.LEFT - MARGIN.RIGHT,
-    LAYOUT_INTERATIONS = 50,
+    HEIGHT = 900 - MARGIN.TOP - MARGIN.BOTTOM,
+    WIDTH = container.width() - MARGIN.LEFT - MARGIN.RIGHT,
+    LAYOUT_INTERATIONS = 100,
     REFRESH_INTERVAL = 5000;
+
+var formatIcdCode = function (node) {
+    if (node.id.toString().length === 3) {
+        return " [ICD Code: " + node.id + "] ";
+    }
+    if (node.id.toString().length < 3) {
+        return " [ICD Group: " + node.id + "] ";
+    }
+};
+
 
 var formatNumber = function (d) {
         var numberFormat = d3.format(",.0f"); // zero decimal places
@@ -87,13 +99,17 @@ var formatNumber = function (d) {
     },
 
     showTooltip = function () {
+        //var relX = event.pageX - $(this).offset().left;
+        //var relY = event.pageY - $(this).offset().top;
+
         return tooltip
             .style("left", d3.event.pageX + "px")
-            .style("top", d3.event.pageY + 15 + "px")
+            .style("top", (d3.event.pageY - 200) + "px")
             .transition()
             .duration(TRANSITION_DURATION)
             .style("opacity", 1);
     };
+
 
 colorScale = d3.scale.ordinal().domain(TYPES).range(TYPE_COLORS);
 highlightColorScale = d3.scale.ordinal().domain(TYPES).range(TYPE_HIGHLIGHT_COLORS);
@@ -168,6 +184,7 @@ defs.append("marker")
     .attr("orient", "auto")
     .append("path")
     .attr("d", "M 0 0 L 1 0 L 6 5 L 1 10 L 0 10 z");
+
 
 function update() {
     var link, linkEnter, node, nodeEnter, collapser, collapserEnter;
@@ -289,6 +306,7 @@ function update() {
             .style("opacity", OPACITY.NODE_FADED);
     }
 
+
     link = svg.select("#links").selectAll("path.link")
         .data(biHiSankey.visibleLinks(), function (d) {
             return d.id;
@@ -314,9 +332,9 @@ function update() {
         if (!isTransitioning) {
             showTooltip().select(".value").text(function () {
                 if (d.direction > 0) {
-                    return d.source.name + " → " + d.target.name + "\n" + formatNumber(d.value);
+                    return formatIcdCode(d.source) + d.source.name + " → " + formatIcdCode(d.target) + d.target.name + "\n" + "Support: " + formatNumber(d.value);
                 }
-                return d.target.name + " ← " + d.source.name + "\n" + formatNumber(d.value);
+                return formatIcdCode(d.target) + d.target.name + " ← " + formatIcdCode(d.source) + d.source.name + "\n" + "Support: " + formatNumber(d.value);
             });
 
             d3.select(this)
@@ -456,7 +474,7 @@ function update() {
                 .duration(TRANSITION_DURATION)
                 .style("opacity", 1).select(".value")
                 .text(function () {
-                    var additionalInstructions = g.children.length ? "\n(Double click to expand)" : "";
+                    var additionalInstructions = g.children.length ? "\n(Double click to expand)" : "\n(Double click to colapse)";
                     return g.name + "\nSupport: " + formatFlow(g.netFlow) + additionalInstructions;
                 });
         }
@@ -562,7 +580,7 @@ function update() {
         if (!isTransitioning) {
             showTooltip().select(".value")
                 .text(function () {
-                    return g.name + "\n(Double click to collapse)";
+                    return g.name + "\n(Double click to expand.)";
                 });
 
             var highlightColor = highlightColorScale(g.type.replace(/ .*/, ""));
@@ -644,52 +662,70 @@ var icdLinks = (function () {
     return links;
 })();
 
+function getUnique(arr, comp) {
+
+    const unique = arr
+        .map(e => e[comp])
+
+        // store the keys of the unique objects
+        .map((e, i, final) => final.indexOf(e) === i && i)
+
+        // eliminate the dead keys & store unique objects
+        .filter(e => arr[e]).map(e => arr[e]);
+
+    return unique;
+}
+
+
 
 var icdFilteredNodes = function (links) {
-    let usedNodes = union(reduce(links, 'source'), reduce(links, 'target'));
+    let usedNodes = union(reduce(_.clone(links), 'source'), reduce(_.clone(links), 'target'));
     let nodes = [];
-
-    console.log(usedNodes);
+    let parents = [];
 
     usedNodes.forEach(function (node) {
-        nodes.push(icdNodes[node]);
+        var icdNode = _.clone(icdNodes[node]);
+        var icdParent = _.clone(icdNodes[icdNode['parent']]);
+
+        nodes.push(icdNode);
+        parents.push(icdParent);
     });
 
-    for (let i = 0; i < 19; i++) {
-        nodes.push(icdNodes[i]);
-    }
-
-    return nodes;
+    return _.union(nodes, getUnique(parents, 'id'));
 };
 
 function valueUpdate() {
+    document.body.style.cursor = 'wait';
+
     let age = $('#ageValue').val();
     $('#agelabel').text('Age: ' + (Math.round(age / 10) * 10) + ' to ' + (10 + Math.round(age / 10) * 10));
 
     var gender = $("#gender option:selected").val();
     let groupKey = Math.round(age / 10) + '' + gender.charAt(0);
 
-    if (icdNodes !== null && icdLinks !== null) {
-        var currentLinks = icdLinks[groupKey];
-        var currentNodes = icdFilteredNodes(icdLinks[groupKey]);
+    if (icdNodes !== null && icdLinks !== null && icdLinks.hasOwnProperty(groupKey)) {
+        let currentLinks = $.extend(true, [], icdLinks[groupKey]);
+        let currentNodes = icdFilteredNodes(currentLinks);
 
-        console.log(currentLinks, currentNodes);
+        if (currentLinks.length > 0 && currentNodes.length > 0) {
+            biHiSankey
+                .nodes(currentNodes)
+                .links(currentLinks)
+                .initializeNodes(function (node) {
+                    node.state = node.parent ? "contained" : "collapsed";
+                })
+                .layout(LAYOUT_INTERATIONS);
 
-        biHiSankey
-            .nodes(currentNodes)
-            .links(currentLinks)
-            .initializeNodes(function (node) {
-                node.state = node.parent ? "contained" : "collapsed";
-            })
-            .layout(LAYOUT_INTERATIONS);
-
-        disableUserInterractions(2 * TRANSITION_DURATION);
-
-        update();
+            disableUserInterractions(2 * TRANSITION_DURATION);
+            update();
+        }
     }
+    document.body.style.cursor = 'default';
 }
 
 $(document).ready(function () {
+    document.body.style.cursor = 'default';
+
     $('#gender').on('change', function () {
         valueUpdate();
     });

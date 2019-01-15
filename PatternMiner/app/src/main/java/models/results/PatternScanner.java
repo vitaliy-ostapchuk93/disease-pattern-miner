@@ -252,7 +252,7 @@ public class PatternScanner {
         Map<ICDLink, Long> filteredLinkMap = linksMap.entrySet().stream()
                 .filter(icdLinkEntry -> icdLinkEntry.getValue() >= 10)
                 .sorted(comparingByValue(Comparator.reverseOrder()))
-                .limit(100)
+                .limit(250)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
         return createLinks(filteredLinkMap);

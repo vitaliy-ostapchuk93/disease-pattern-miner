@@ -26,7 +26,8 @@ public class ResultsServlet extends HttpServlet {
 
             Set<DataFile> set = dataManager.getResultFileSet();
             resultsManager.fillResultMapper(set);
-            resultsManager.getMapper().createFullICDLinksFiles(this.getServletContext());
+
+            //resultsManager.getMapper().createFullICDLinksFiles(this.getServletContext());
         }
 
         request.setAttribute("MAPPER", resultsManager.getMapper());
