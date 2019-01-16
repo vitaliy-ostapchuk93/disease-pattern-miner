@@ -36,6 +36,16 @@ public class TestFileBuilder {
         File output = new File(outputDir.getPath() + File.separator + "testDiseasesOfInterest.csv");
         LOGGER.info("Creating SubsetOfInterest > " + output.getPath());
 
+        int counter = 0;
+
+        if (output.exists()) {
+            output.delete();
+            try {
+                output.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         FileAppendUtils appendUtils = new FileAppendUtils();
         for (DataFile groupFile : mainDataFile.getChildFiles()) {
@@ -59,6 +69,7 @@ public class TestFileBuilder {
                     //different sequence id
                     if (!p[0].equals(sequence.getId())) {
                         if (!Collections.disjoint(sequence.getAllIcdCodes(), icdCodesOfInterest)) {
+                            counter++;
                             for (String transaction : lines) {
                                 appendUtils.appendToFile(output, transaction);
                             }
@@ -81,7 +92,7 @@ public class TestFileBuilder {
             }
         }
         appendUtils.closeAllWriters();
-
+        LOGGER.info("Found " + counter + " patients with codes of Interest.");
     }
 
 
