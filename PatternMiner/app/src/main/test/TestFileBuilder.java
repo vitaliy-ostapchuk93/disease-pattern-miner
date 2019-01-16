@@ -50,7 +50,10 @@ public class TestFileBuilder {
         FileAppendUtils appendUtils = new FileAppendUtils();
         for (DataFile groupFile : mainDataFile.getChildFiles()) {
             LOGGER.info("Scanning " + groupFile.getName() + " for SubsetsOfInterest.");
-            String prefix = "" + groupFile.getGenderGroup().name().toLowerCase().toCharArray()[0] + groupFile.getAgeGroup();
+
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(groupFile.getGendederAgeGroup().toString().toLowerCase());
+            String group = stringBuilder.reverse().toString();
 
             try {
                 LineIterator it = FileUtils.lineIterator(groupFile, "UTF-8");
@@ -72,7 +75,7 @@ public class TestFileBuilder {
                         if (!Collections.disjoint(sequence.getAllIcdCodes(), icdCodesOfInterest)) {
                             counter++;
                             for (String transaction : lines) {
-                                appendUtils.appendToFile(output, prefix + "," + transaction);
+                                appendUtils.appendToFile(output, group + "," + transaction);
                             }
                         }
 

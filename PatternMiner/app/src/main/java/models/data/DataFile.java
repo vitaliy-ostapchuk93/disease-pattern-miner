@@ -92,6 +92,9 @@ public abstract class DataFile extends File implements Serializable {
     }
 
     private String getGroupFromName() {
+        if (getName().startsWith("cd_all_")) {
+            return getName().replace("cd_all_", "").split("_")[0].toUpperCase();
+        }
         if (getName().contains("_")) {
             return getName().split("_")[1].toUpperCase();
         } else {
