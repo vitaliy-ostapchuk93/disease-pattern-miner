@@ -18,7 +18,7 @@ public class DataManager implements ServletContextListener, DataFileListener {
     private final static Logger LOGGER = Logger.getLogger(DataManager.class.getName());
     private Set<DataFile> mainFileSet;
 
-    private MyFileWriter fileWriter;
+    private FileAppendUtils appendUtils;
 
     @Override
     public void contextInitialized(ServletContextEvent event) {
@@ -27,7 +27,7 @@ public class DataManager implements ServletContextListener, DataFileListener {
 
         ServletContext ctx = event.getServletContext();
 
-        this.fileWriter = new MyFileWriter();
+        this.appendUtils = new FileAppendUtils();
 
         createDataFileSet(ctx);
 
@@ -144,7 +144,7 @@ public class DataManager implements ServletContextListener, DataFileListener {
         LOGGER.info("DataManager destroyed.");
         mainFileSet.clear();
 
-        fileWriter.closeAllWriters();
+        appendUtils.closeAllWriters();
     }
 
     public Set<DataFile> getMainFileSet() {

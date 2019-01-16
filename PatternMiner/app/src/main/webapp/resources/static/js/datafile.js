@@ -15,8 +15,10 @@ $(document).ready(function () {
         }
     });
 
-    /*
+
     $('#fileUpload').on('change', function (event) {
+        console.log(event);
+        /*
         $.ajax({
             url: '/upload',
             data: $('#file').attr('files'),
@@ -28,13 +30,21 @@ $(document).ready(function () {
                 alert(data);
             }
         });
+        */
     });
-    */
+
 
     $('#downloadExternal').on('click', function (event) {
         let params = {"externalURL": $("#externalURL").val()};
         $.post("/externalSource", $.param(params), function (response) {
-            alert(response);
+            console.log(response);
         })
-    })
+    });
+
+    $('#inverseSearch').on('click', function (event) {
+        $.post("/rescanDataSources", {}, function () {
+            console.log("Updating Sources.");
+        });
+    });
+
 });

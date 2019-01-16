@@ -18,10 +18,6 @@ public class RescanDataSourcesServlet extends HttpServlet {
     private final static Logger LOGGER = Logger.getLogger(RescanDataSourcesServlet.class.getName());
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        doGet(request, response);
-    }
-
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         LOGGER.info("Reinit FileStructure.");
 
         DataManager dataManager = (DataManager) this.getServletContext().getAttribute("DataManager");
@@ -34,6 +30,10 @@ public class RescanDataSourcesServlet extends HttpServlet {
 
         resultsManager.getMapper().createFullICDLinksFiles(this.getServletContext());
 
+        doGet(request, response);
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         RequestDispatcher dispatcher = this.getServletContext().getRequestDispatcher("/WEB-INF/views/dashboard.jsp");
         dispatcher.forward(request, response);
     }

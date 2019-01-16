@@ -1,8 +1,8 @@
 package models.algorithm;
 
 import models.data.DataFile;
+import models.data.FileAppendUtils;
 import models.data.GroupDataFile;
-import models.data.MyFileWriter;
 import models.data.SeqDataFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
@@ -55,7 +55,7 @@ public abstract class AbstractAlgorithmTask {
     }
 
     protected void writeResultTmpToOutput(File tmpResult, DataFile outputFile) {
-        MyFileWriter writer = new MyFileWriter();
+        FileAppendUtils appendUtils = new FileAppendUtils();
         LineIterator it = null;
         try {
             it = FileUtils.lineIterator(tmpResult, "UTF-8");
@@ -63,10 +63,10 @@ public abstract class AbstractAlgorithmTask {
             while (it.hasNext()) {
                 String[] p = it.nextLine().split("\\t");
                 String line = p[0] + "-2 #SUP: " + p[1];
-                writer.appendToFile(outputFile, line);
+                appendUtils.appendToFile(outputFile, line);
             }
             it.close();
-            writer.closeAllWriters();
+            appendUtils.closeAllWriters();
         } catch (IOException e) {
             e.printStackTrace();
         }

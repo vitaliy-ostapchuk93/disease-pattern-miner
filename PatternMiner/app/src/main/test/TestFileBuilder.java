@@ -1,25 +1,119 @@
-import models.data.Gender;
-import models.data.GenderAgeGroup;
+import models.data.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.logging.Logger;
 
 public class TestFileBuilder {
+    private static final String COMMA = ",";
+    private final static Logger LOGGER = Logger.getLogger(TestFileBuilder.class.getName());
 
     public static void main(String[] arg) {
-        File input = new File("C:\\Users\\vital\\Desktop\\cd_all.csv");
-        String outputDir = "C:\\Users\\vital\\Desktop\\";
+        File input = new File("C:\\Users\\vital\\Desktop\\csv\\all\\cd_all.csv");
+        File outputDir = new File("C:\\Users\\vital\\Desktop\\csv\\all\\");
+
+        //createSubsets(input, outputDir);
+        createSubsetsOfInterest(input, outputDir);
+    }
+
+    public static void createSubsetsOfInterest(File input, File outputDir) {
+        LOGGER.info("Creating SubsetOfInterest ICD Codes.");
+
+        MainDataFile mainDataFile = createDataFiles(input, outputDir);
+
+        Set<ICDCode> icdCodesOfInterest = new HashSet<>();
+        icdCodesOfInterest.add(new ICDCode("346"));                     // Migraine
+        icdCodesOfInterest.add(new ICDCode("249"));                     // Secondary diabetes mellitus
+        icdCodesOfInterest.add(new ICDCode("250"));                     // Diabetes mellitus
+        icdCodesOfInterest.add(new ICDCode("410"));                     // Acute myocardial infarction
+        icdCodesOfInterest.add(new ICDCode("412"));                     // Old myocardial infarction
+        icdCodesOfInterest.add(new ICDCode("585"));                     // ChronicKidneyDisease
+
+
+        File output = new File(outputDir.getPath() + File.separator + "testDiseasesOfInterest.csv");
+        LOGGER.info("Creating SubsetOfInterest > " + output.getPath());
+
+
+        FileAppendUtils appendUtils = new FileAppendUtils();
+        for (DataFile groupFile : mainDataFile.getChildFiles()) {
+            LOGGER.info("Scanning " + groupFile.getName() + " for SubsetsOfInterest.");
+
+            try {
+                LineIterator it = FileUtils.lineIterator(groupFile, "UTF-8");
+                ICDSequence sequence = null;
+                List<String> lines = new ArrayList<>();
+
+                while (it.hasNext()) {
+                    String line = it.nextLine();
+                    String[] p = line.split(COMMA);
+
+                    //first sequence
+                    if (sequence == null) {
+                        sequence = new ICDSequence(p[0]);
+                        lines = new ArrayList<>();
+                    }
+
+                    //different sequence id
+                    if (!p[0].equals(sequence.getId())) {
+                        if (!Collections.disjoint(sequence.getAllIcdCodes(), icdCodesOfInterest)) {
+                            for (String transaction : lines) {
+                                appendUtils.appendToFile(output, transaction);
+                            }
+                        }
+
+                        sequence = new ICDSequence(p[0]);
+                        lines = new ArrayList<>();
+                    }
+
+                    //same sequence
+                    if (p.length >= 2) {
+                        sequence.addDiagnoses(p[1], Arrays.copyOfRange(p, 2, p.length));
+                        lines.add(line);
+                    }
+                }
+
+                it.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        appendUtils.closeAllWriters();
+
+    }
+
+
+    private static MainDataFile createDataFiles(File input, File outputDir) {
+        MainDataFile mainDataFile = new MainDataFile(input.getPath());
+        File childrenDir = new File(outputDir.getParent() + File.separator + "groups");
+        childrenDir.mkdirs();
+        File[] listFiles = childrenDir.listFiles();
+
+        if (listFiles.length != 0) {
+            LOGGER.info("Found existing child files.");
+
+            for (File file : listFiles) {
+                GroupDataFile groupDataFile = new GroupDataFile(file.getPath());
+                mainDataFile.makeChild(groupDataFile);
+            }
+        } else {
+            LOGGER.info("Creating group child files.");
+
+            mainDataFile.splitIntoSortedGroups();
+        }
+
+        return mainDataFile;
+    }
+
+    public static void createSubsets(File input, File outputDir) {
         //int[] testFileSize = {20, 50, 100, 200, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 5000, 7500, 10000, 15000, 20000, 50000};
-        int[] testFileSize = {100, 200, 500, 750, 1000};
+        int[] testFileSize = {100};
+
         for (int s : testFileSize) {
             int size = s * 1000;
-            File output = new File(outputDir + "test" + s + "K.csv");
+            File output = new File(outputDir.getPath() + File.separator + "test" + s + "K.csv");
 
             Map<GenderAgeGroup, Long> counterMap = new HashMap<>();
 
@@ -34,7 +128,8 @@ public class TestFileBuilder {
     }
 
     private static void findAndCreateTestGroup(File input, File output, Map<GenderAgeGroup, Long> counterMap, long N) {
-        BufferedWriter writer = getWriter(output);
+        FileAppendUtils appendUtils = new FileAppendUtils();
+
         try {
             LineIterator it = FileUtils.lineIterator(input, "UTF-8");
             while (it.hasNext()) {
@@ -57,41 +152,17 @@ public class TestFileBuilder {
                     long count = counterMap.get(group);
 
                     if (count < N) {
-                        writer.write(line);
-                        writer.newLine();
+                        appendUtils.appendToFile(output, line);
                         counterMap.put(group, count + 1);
                     }
                 } catch (Exception e) {
                     continue;
                 }
             }
+            appendUtils.closeAllWriters();
             it.close();
-            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-
-    private static BufferedWriter getWriter(File file) {
-        try {
-            if (file.exists()) {
-                file.delete();
-            }
-            if (!file.exists()) {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-            }
-
-            // true = append file
-            FileWriter fileWriter = new FileWriter(file.getPath(), true);
-            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-
-            return bufferedWriter;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
 }

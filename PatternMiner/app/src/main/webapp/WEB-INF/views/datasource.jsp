@@ -55,12 +55,25 @@
                        value="http://tmu.serveo.net/datasource.zip" id="externalURL">
                 <span class="icon is-small is-left">
                         <i class="fas fa-external-link-square-alt"></i>
-                    </span>
+                </span>
             </div>
             </p>
             <p class="control">
                 <a class="button is-link" id="downloadExternal">
                     Download
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <div class="field has-addons is-horizontal">
+        <div class="field-label is-normal">
+            <label class="label has-text-light has-text-left">Inverse-Search</label>
+        </div>
+        <div class="field-body">
+            <p class="control">
+                <a class="button is-link" id="inverseSearch">
+                    Create Inverse-Search-Data for Common Patterns
                 </a>
             </p>
         </div>

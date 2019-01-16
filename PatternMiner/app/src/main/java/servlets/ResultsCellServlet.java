@@ -27,6 +27,7 @@ public class ResultsCellServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         LOGGER.setLevel(Level.INFO);
 
+
         response.setContentType("text/plain");
         response.setCharacterEncoding("UTF-8");
         PrintWriter writer = response.getWriter();

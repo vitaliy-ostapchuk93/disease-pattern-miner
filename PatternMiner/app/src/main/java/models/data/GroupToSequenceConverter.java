@@ -15,11 +15,11 @@ public class GroupToSequenceConverter {
 
     private final static Logger LOGGER = Logger.getLogger(GroupToSequenceConverter.class.getName());
     private static final String COMMA = ",";
-    private MyFileWriter fileWriter;
+    private FileAppendUtils appendUtils;
 
 
     public GroupToSequenceConverter() {
-        this.fileWriter = new MyFileWriter();
+        this.appendUtils = new FileAppendUtils();
 
         LOGGER.setLevel(Level.INFO);
     }
@@ -66,12 +66,12 @@ public class GroupToSequenceConverter {
         try {
             for (ICDCode code : icds) {
                 String hierarchy = code.getSmallCode() + "\t" + code.getGroup().ordinal();
-                fileWriter.appendToFile(output, hierarchy);
+                appendUtils.appendToFile(output, hierarchy);
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            fileWriter.closeAllWriters();
+            appendUtils.closeAllWriters();
         }
     }
 
@@ -108,7 +108,7 @@ public class GroupToSequenceConverter {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            fileWriter.closeAllWriters();
+            appendUtils.closeAllWriters();
         }
         return codes;
     }
@@ -145,7 +145,7 @@ public class GroupToSequenceConverter {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            fileWriter.closeAllWriters();
+            appendUtils.closeAllWriters();
         }
     }
 
@@ -165,7 +165,7 @@ public class GroupToSequenceConverter {
             }
 
             if (!formattedSeq.isEmpty()) {
-                fileWriter.appendToFile(output, formattedSeq);
+                appendUtils.appendToFile(output, formattedSeq);
             }
         }
     }

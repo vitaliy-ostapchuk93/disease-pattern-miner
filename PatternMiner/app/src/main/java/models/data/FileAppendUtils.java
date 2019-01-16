@@ -9,11 +9,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Set;
 
-public class MyFileWriter {
+public class FileAppendUtils {
 
     private BiMap<String, BufferedWriter> writerBiMap;
 
-    public MyFileWriter() {
+    public FileAppendUtils() {
         writerBiMap = HashBiMap.create();
     }
 

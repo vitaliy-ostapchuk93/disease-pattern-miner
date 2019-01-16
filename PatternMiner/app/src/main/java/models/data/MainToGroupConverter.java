@@ -20,10 +20,10 @@ public class MainToGroupConverter {
 
     private final static Logger LOGGER = Logger.getLogger(MainToGroupConverter.class.getName());
 
-    private MyFileWriter fileWriter;
+    private FileAppendUtils appendUtils;
 
     public MainToGroupConverter() {
-        this.fileWriter = new MyFileWriter();
+        this.appendUtils = new FileAppendUtils();
 
         LOGGER.setLevel(Level.INFO);
     }
@@ -60,15 +60,15 @@ public class MainToGroupConverter {
                 String line = it.nextLine();
                 String group = line.substring(0, 2);
 
-                fileWriter.appendToFile(groupPath + "tmp_" + mainFile.getName().split(".csv")[0].replace("test", "") + "_" + group + ".csv", line.substring(3));
+                appendUtils.appendToFile(groupPath + "tmp_" + mainFile.getName().split(".csv")[0].replace("test", "") + "_" + group + ".csv", line.substring(3));
             }
 
-            paths.addAll(fileWriter.getPathsSet());
+            paths.addAll(appendUtils.getPathsSet());
             it.close();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            fileWriter.closeAllWriters();
+            appendUtils.closeAllWriters();
         }
         return paths;
     }
@@ -154,13 +154,13 @@ public class MainToGroupConverter {
                 String line = it.nextLine();
                 String suffix = line.substring(0, 2);
 
-                fileWriter.appendToFile(tmp.getPath() + File.separator + suffix + ".csv", line);
+                appendUtils.appendToFile(tmp.getPath() + File.separator + suffix + ".csv", line);
             }
             it.close();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            fileWriter.closeAllWriters();
+            appendUtils.closeAllWriters();
         }
     }
 
@@ -191,7 +191,7 @@ public class MainToGroupConverter {
             Collections.sort(lines);
 
             for (String line : lines) {
-                fileWriter.appendToFile(output.getPath(), line);
+                appendUtils.appendToFile(output.getPath(), line);
             }
         } catch (IOException e) {
             e.printStackTrace();

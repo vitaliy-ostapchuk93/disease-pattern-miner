@@ -1,8 +1,8 @@
 package models.algorithm;
 
 import models.data.DataFile;
+import models.data.FileAppendUtils;
 import models.data.GroupDataFile;
-import models.data.MyFileWriter;
 import models.data.ResultsDataFile;
 import models.results.DataFileListener;
 import org.joda.time.DateTime;
@@ -256,9 +256,9 @@ public class AlgorithmRunnable implements Runnable {
 
         String report = getReport(inputFile, outputFile, start, end);
 
-        MyFileWriter writer = new MyFileWriter();
-        writer.appendToFile(statsFile, report);
-        writer.closeAllWriters();
+        FileAppendUtils appendUtils = new FileAppendUtils();
+        appendUtils.appendToFile(statsFile, report);
+        appendUtils.closeAllWriters();
     }
 
     private File getStatsFile(DataFile outputFile) {

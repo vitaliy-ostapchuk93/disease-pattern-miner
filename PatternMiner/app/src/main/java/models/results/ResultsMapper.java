@@ -45,10 +45,14 @@ public class ResultsMapper {
 
     public ImmutableTable<String, GenderAgeGroup, ResultsEntry> getFilteredResultsTable() {
         ImmutableTable.Builder<String, GenderAgeGroup, ResultsEntry> sortedBuilder = ImmutableTable.builder();
+
         for (Table.Cell<String, GenderAgeGroup, ResultsEntry> cell : getTableCellComporator().reverse().sortedCopy(resultsTable.cellSet())) {
             sortedBuilder.put(cell);
         }
+
         ImmutableTable<String, GenderAgeGroup, ResultsEntry> filteredResults = sortedBuilder.build();
+
+        //apply filter
         for (ResultsFilter filter : filterList) {
             ImmutableTable.Builder<String, GenderAgeGroup, ResultsEntry> filteredBuilder = ImmutableTable.builder();
             filteredResults = filteredBuilder.putAll(applyFilter(filter, filteredResults)).build();
@@ -185,13 +189,11 @@ public class ResultsMapper {
         Set<String> topEntrySet = new HashSet<>();
         for (GenderAgeGroup group : table.columnKeySet()) {
             int p_size = (int) (table.column(group).size() * filterTopPGroup / 100.0f);
-            System.out.println("Group=" + group + " , p_size=" + p_size);
             if (p_size == 0) {
                 p_size = 1;
             }
             topEntrySet.addAll(createGroupKeySet(table.column(group).keySet(), p_size));
         }
-        //System.out.println("topEntrySet size="+topEntrySet.size());
         return createTableByEntryKeys(table, topEntrySet);
     }
 
@@ -517,7 +519,7 @@ public class ResultsMapper {
     }
 
     public void createFullICDLinksFiles(ServletContext servletContext) {
-        for (Table.Cell<String, GenderAgeGroup, ResultsEntry> cell : resultsTable.cellSet()) {
+        for (Table.Cell<String, GenderAgeGroup, ResultsEntry> cell : applyTopPercentGroupFilter(getFilteredResultsTable(), 3.0).cellSet()) {
             PatternScanner patternScanner = getPatternScanner(cell.getRowKey());
             patternScanner.createInverseSearchFiles(servletContext, cell);
         }
