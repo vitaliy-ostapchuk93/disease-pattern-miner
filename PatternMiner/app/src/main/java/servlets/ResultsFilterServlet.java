@@ -71,7 +71,6 @@ public class ResultsFilterServlet extends HttpServlet {
                 int seqLength = Integer.parseInt(request.getParameter("minSeqLengthSlider"));
                 resultsManager.setFilterSeqLength(id, seqLength);
             }
-
         }
 
         doGet(request, response);

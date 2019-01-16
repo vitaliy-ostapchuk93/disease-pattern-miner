@@ -50,6 +50,7 @@ public class TestFileBuilder {
         FileAppendUtils appendUtils = new FileAppendUtils();
         for (DataFile groupFile : mainDataFile.getChildFiles()) {
             LOGGER.info("Scanning " + groupFile.getName() + " for SubsetsOfInterest.");
+            String prefix = "" + groupFile.getGenderGroup().name().toLowerCase().toCharArray()[0] + groupFile.getAgeGroup();
 
             try {
                 LineIterator it = FileUtils.lineIterator(groupFile, "UTF-8");
@@ -71,7 +72,7 @@ public class TestFileBuilder {
                         if (!Collections.disjoint(sequence.getAllIcdCodes(), icdCodesOfInterest)) {
                             counter++;
                             for (String transaction : lines) {
-                                appendUtils.appendToFile(output, transaction);
+                                appendUtils.appendToFile(output, prefix + "," + transaction);
                             }
                         }
 
@@ -92,7 +93,7 @@ public class TestFileBuilder {
             }
         }
         appendUtils.closeAllWriters();
-        LOGGER.info("Found " + counter + " patients with codes of Interest.");
+        LOGGER.info("Found " + counter + " patients with codes of Interest.");          // 1892889 (patient-sequences)
     }
 
 
