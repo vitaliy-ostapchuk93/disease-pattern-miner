@@ -1,5 +1,6 @@
 package models.results;
 
+import com.google.gson.JsonObject;
 import models.data.GroupDataFile;
 import models.data.ResultsDataFile;
 import models.data.SeqDataFile;
@@ -40,22 +41,15 @@ public class ResultsEntry implements Comparable<ResultsEntry>, Serializable {
         return supportValue * 1.0f / getSequenceCountOfInputFile();
     }
 
-    public String getTooltipStats() {
-        StringBuilder tooltip = new StringBuilder();
+    public JsonObject getTooltipStats() {
+        JsonObject stats = new JsonObject();
 
-        tooltip.append("<b>Pattern found in:</b><br>");
-        tooltip.append(getFileOfResult().getName());
-        tooltip.append(" with [ absolute support = ");
-        tooltip.append(getAbsSupportValue());
-        tooltip.append(", sequence-count = ");
-        tooltip.append(getSequenceCountOfInputFile());
-        tooltip.append(", relative support = ");
-        tooltip.append(getRelSupportValue());
-        tooltip.append(" ]");
+        stats.addProperty("fileOfResult", getFileOfResult().getName());
+        stats.addProperty("absSup", getAbsSupportValue());
+        stats.addProperty("relSup", getRelSupportValue());
+        stats.addProperty("seqCount", getSequenceCountOfInputFile());
 
-        tooltip.append("<br><br>");
-
-        return tooltip.toString();
+        return stats;
     }
 
     @Override

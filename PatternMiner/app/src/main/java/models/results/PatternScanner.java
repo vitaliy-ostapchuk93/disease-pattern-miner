@@ -6,13 +6,10 @@ import com.google.gson.stream.JsonReader;
 import models.data.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
-import org.uncommons.maths.statistics.EmptyDataSetException;
 
 import javax.servlet.ServletContext;
 import java.io.*;
-import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,135 +26,12 @@ public class PatternScanner {
     private String seqKey;
     private Pattern pattern;
 
-    private List<ICDSequence> currentIcdSequences;
-    private Map<String, Map<ICDLink, Long>> fullLinksMap;
 
     public PatternScanner(String seqKey) {
         this.seqKey = seqKey;
         createRegex();
-
-        this.currentIcdSequences = new ArrayList<>();
-        this.fullLinksMap = new ConcurrentHashMap<>();
-
         LOGGER.setLevel(Level.INFO);
     }
-
-
-    public String scanForCommonICDCodes() {
-        if (!currentIcdSequences.isEmpty()) {
-            return buildPatternsResultString(currentIcdSequences);
-        } else {
-            throw new EmptyDataSetException();
-        }
-    }
-
-    private String buildPatternsResultString(List<ICDSequence> matchingSequences) {
-        StringBuilder patterns = new StringBuilder("<b>Pattern Code-Search [ICD-9 Code | SUP] :</b> <br>");
-
-        for (String key : seqKey.split(" ")) {
-            if (Integer.parseInt(key) != -1) {
-                patterns.append("<div class=\"column\">");
-                patterns.append("<div class=\"content\">");
-                patterns.append("<p>Codes for <b>").append(key).append("</b> [").append(DiagnosesGroup.values()[Integer.parseInt(key)].name()).append("]</p>");
-                patterns.append("</div>");
-                patterns.append("<div class=\"field is-grouped is-grouped-multiline\">");
-
-
-                Map<ICDCode, Integer> topTen = getMatchingCodesMap(matchingSequences).get(Integer.parseInt(key)).entrySet().stream()
-                        .sorted(comparingByValue(Comparator.reverseOrder())).limit(10)
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-
-                for (Map.Entry<ICDCode, Integer> code : topTen.entrySet()) {
-                    float p = code.getValue() * 100.0f / matchingSequences.size();
-                    if (p >= 5) {
-                        patterns.append("<div class=\"control\">");
-                        patterns.append("<div class=\"tags has-addons\">");
-                        patterns.append("<span class=\"tag\">").append(code.getKey().getSmallCode()).append("</span>");
-                        patterns.append("<span class=\"tag is-info\">");
-
-                        DecimalFormat df = new DecimalFormat();
-                        df.setMaximumFractionDigits(2);
-                        patterns.append(df.format(p) + " %");
-
-                        patterns.append("</span>");
-                        patterns.append("</div>");
-                        patterns.append("</div>");
-                    }
-                }
-
-
-                patterns.append("</div>");
-                patterns.append("</div>");
-            }
-        }
-        return patterns.toString();
-    }
-
-    private Map<Integer, Map<ICDCode, Integer>> getMatchingCodesMap(List<ICDSequence> matchingSequences) {
-        Map<Integer, Map<ICDCode, Integer>> matchingCodesMap = new HashMap<>();
-        String[] keys = seqKey.split(" ");
-
-        for (ICDSequence sequence : matchingSequences) {
-            for (String key : keys) {
-                int group = Integer.parseInt(key);
-                if (!matchingCodesMap.containsKey(Integer.parseInt(key))) {
-                    matchingCodesMap.put(group, new HashMap<>());
-                }
-                for (ICDCode code : sequence.getCodesMatchingGroup(group)) {
-                    if (!matchingCodesMap.get(group).containsKey(code)) {
-                        matchingCodesMap.get(group).put(code, 0);
-                    }
-                    matchingCodesMap.get(group).put(code, matchingCodesMap.get(group).get(code) + 1);
-                }
-            }
-        }
-
-        return matchingCodesMap;
-    }
-
-    public List<ICDSequence> scanForMatchingSequences(GroupDataFile dataFile) {
-        List<ICDSequence> matchingSequences = new ArrayList<>();
-
-        try {
-            LineIterator it = FileUtils.lineIterator(dataFile, "UTF-8");
-
-            ICDSequence sequence = null;
-            while (it.hasNext()) {
-                String[] p = it.nextLine().split(",");
-
-                //first sequence
-                if (sequence == null) {
-                    sequence = new ICDSequence(p[0]);
-                }
-
-                //different sequence id
-                if (!p[0].equals(sequence.getId())) {
-                    if (sequence.getFilteredDiagnosesCount() > 2) {
-                        String formatedSeq = sequence.getFormatedSeqSPMF(14);
-
-                        Matcher m = pattern.matcher(formatedSeq);
-                        if (m.find()) {
-                            matchingSequences.add(sequence);
-                        }
-                    }
-
-                    sequence = new ICDSequence(p[0]);
-                }
-
-                //same sequence
-                if (p.length >= 2) {
-                    sequence.addDiagnoses(p[1], Arrays.copyOfRange(p, 2, p.length));
-                }
-
-            }
-            it.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return matchingSequences;
-    }
-
 
     private void createRegex() {
         String sortedSeqKey = sortedPattern();
@@ -216,6 +90,10 @@ public class PatternScanner {
     }
 
 
+    public JsonArray getCommonCodesJSON(ServletContext servletContext, GroupDataFile groupFileOfResult) {
+        return (JsonArray) loadJson(getCommonCodesFilePath(servletContext, groupFileOfResult));
+    }
+
     private JsonArray createLinks(Map<ICDLink, Long> linksMap) {
         JsonArray links = new JsonArray();
 
@@ -255,17 +133,120 @@ public class PatternScanner {
         File dir = new File(servletContext.getRealPath(getScanDir()));
         dir.mkdirs();
 
-        this.currentIcdSequences = scanForMatchingSequences(entry.getGroupFileOfResult());
+        Map<ICDLink, Long> fullLinks = new HashMap<>();
+        Map<ICDCode, Long> fullCommonCodes = new HashMap<>();
+
+        try {
+            LineIterator it = FileUtils.lineIterator(entry.getGroupFileOfResult(), "UTF-8");
+
+            ICDSequence sequence = null;
+            while (it.hasNext()) {
+                String[] p = it.nextLine().split(",");
+
+                //first sequence
+                if (sequence == null) {
+                    sequence = new ICDSequence(p[0]);
+                }
+
+                //different sequence id
+                if (!p[0].equals(sequence.getId())) {
+                    if (sequence.getFilteredDiagnosesCount() > 2) {
+                        String formatedSeq = sequence.getFormatedSeqSPMF(14);
+
+                        Matcher m = pattern.matcher(formatedSeq);
+                        if (m.find()) {
+                            //commonCodes
+                            Map<ICDCode, Long> icdCommonCodes = sequence.getAllIcdCodes().stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+                            icdCommonCodes.forEach((k, v) -> fullCommonCodes.merge(k, v, (v1, v2) -> v1 + v2));
+
+                            // icdLinks
+                            Map<ICDLink, Long> icdLinks = sequence.getIcdLinks().stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+                            icdLinks.forEach((k, v) -> fullLinks.merge(k, v, (v1, v2) -> v1 + v2));
+                        }
+                    }
+
+                    sequence = new ICDSequence(p[0]);
+                }
+
+                //same sequence
+                if (p.length >= 2) {
+                    sequence.addDiagnoses(p[1], Arrays.copyOfRange(p, 2, p.length));
+                }
+
+            }
+            it.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
         String commonCodesFilePath = getCommonCodesFilePath(servletContext, entry.getGroupFileOfResult());
         if (!checkIfFileCreated(commonCodesFilePath)) {
-            createCommonCodesJSON(commonCodesFilePath);
+            saveJson(buildCommonCodesJSON(fullCommonCodes), commonCodesFilePath);
         }
 
-        String fullIcdLinksFilePath = getFullIcdLinksFilePath(servletContext, entry.getGroupFileOfResult());
-        if (!checkIfFileCreated(fullIcdLinksFilePath)) {
-            createIcdLinksJSON(entry, fullIcdLinksFilePath);
+        String icdLinksFilePath = getFullIcdLinksFilePath(servletContext, entry.getGroupFileOfResult());
+        if (!checkIfFileCreated(icdLinksFilePath)) {
+            saveJson(buildLinksJSON(fullLinks), icdLinksFilePath);
         }
+
+    }
+
+    private JsonElement buildCommonCodesJSON(Map<ICDCode, Long> fullCommonCodes) {
+        Map<Integer, Map<ICDCode, Double>> commonCodes = new HashMap<>();
+
+        String[] keys = seqKey.split(" ");
+        for (String key : keys) {
+            int group = Integer.parseInt(key);
+            if (!commonCodes.containsKey(Integer.parseInt(key))) {
+                commonCodes.put(group, new HashMap<>());
+            }
+
+            Map<ICDCode, Long> commonCodesInGroup = fullCommonCodes.entrySet().stream()
+                    .filter(entry -> entry.getKey().getGroup().ordinal() == group)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+            int sum = commonCodesInGroup.values().stream().mapToInt(entry -> entry.intValue()).sum();
+
+            Map<ICDCode, Double> topTen = commonCodesInGroup.entrySet().stream()
+                    .filter(entry -> entry.getValue() >= 0.05 * sum)
+                    .sorted(comparingByValue(Comparator.reverseOrder())).limit(10)
+                    .collect(Collectors.toMap(entry -> entry.getKey(), entry -> round(entry.getValue() / (1.0 * sum))));
+
+            commonCodes.put(group, topTen);
+        }
+
+        return createCommonCodes(commonCodes);
+    }
+
+    private double round(double val) {
+        return Math.round(val * 10000) / 100.0;
+    }
+
+    private JsonElement createCommonCodes(Map<Integer, Map<ICDCode, Double>> commonCodes) {
+        JsonArray fullCommonCodes = new JsonArray();
+
+        for (Map.Entry<Integer, Map<ICDCode, Double>> topGroupsCodes : commonCodes.entrySet()) {
+            JsonObject groupCommonCodes = new JsonObject();
+
+            groupCommonCodes.addProperty("groupOrdinal", topGroupsCodes.getKey());
+            groupCommonCodes.addProperty("groupName", DiagnosesGroup.values()[topGroupsCodes.getKey()].name());
+
+            JsonArray topCodes = new JsonArray();
+
+            for (Map.Entry<ICDCode, Double> topCode : topGroupsCodes.getValue().entrySet()) {
+                JsonObject code = new JsonObject();
+                code.addProperty("code", topCode.getKey().getSmallCode());
+                code.addProperty("count", topCode.getValue());
+
+                topCodes.add(code);
+            }
+
+            groupCommonCodes.add("topCodes", topCodes);
+
+            fullCommonCodes.add(groupCommonCodes);
+        }
+        return fullCommonCodes;
     }
 
     private String getFullIcdLinksFilePath(ServletContext servletContext, GroupDataFile file) {
@@ -281,55 +262,6 @@ public class PatternScanner {
 
     private String getScanDir() {
         return ResultsDataFile.DIR_PATH + File.separator + "scan_ " + seqKey;
-    }
-
-    private void createIcdLinksJSON(ResultsEntry entry, String fullIcdLinksFilePath) {
-        List<ICDLink> icdLinks = new ArrayList<>();
-
-        for (ICDSequence sequence : currentIcdSequences) {
-            icdLinks.addAll(sequence.getIcdLinks());
-        }
-
-        Map<ICDLink, Long> fullLinks = icdLinks.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-        fullLinksMap.put(entry.getGroupFileOfResult().getName(), fullLinks);
-
-        JsonArray fullLinksJSON = buildLinksJSON(fullLinks);
-
-        saveJson(fullLinksJSON, fullIcdLinksFilePath);
-    }
-
-    private void createCommonCodesJSON(String commonCodesFilePath) {
-        JsonObject codes = new JsonObject();
-        JsonArray commonCodes = new JsonArray();
-
-        for (String key : seqKey.split(" ")) {
-            if (Integer.parseInt(key) != -1) {
-                JsonObject group = new JsonObject();
-                group.addProperty("name", DiagnosesGroup.values()[Integer.parseInt(key)].name());
-                group.addProperty("ordinal", DiagnosesGroup.values()[Integer.parseInt(key)].ordinal());
-
-                Map<ICDCode, Integer> topTen = getMatchingCodesMap(currentIcdSequences).get(Integer.parseInt(key)).entrySet().stream()
-                        .sorted(comparingByValue(Comparator.reverseOrder())).limit(10)
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-
-                JsonArray commonCodesGroup = new JsonArray();
-
-                for (Map.Entry<ICDCode, Integer> topCode : topTen.entrySet()) {
-                    JsonObject code = new JsonObject();
-                    code.addProperty("code", topCode.getKey().getSmallCode());
-                    code.addProperty("support", topCode.getValue());
-
-                    commonCodesGroup.add(code);
-                }
-
-                group.add("commonCodes", commonCodesGroup);
-                commonCodes.add(group);
-            }
-        }
-
-        codes.add("commonCodes", commonCodes);
-
-        saveJson(codes, commonCodesFilePath);
     }
 
     private boolean checkIfFileCreated(String path) {

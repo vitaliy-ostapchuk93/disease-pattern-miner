@@ -1,61 +1,48 @@
 package servlets;
 
-import models.data.GroupDataFile;
+import com.google.gson.JsonObject;
 import models.results.PatternScanner;
 import models.results.ResultsEntry;
 
-import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @WebServlet(name = "ResultsCellServlet", urlPatterns = {"/resultscell"}, asyncSupported = true)
 public class ResultsCellServlet extends HttpServlet {
 
-    private final static Logger LOGGER = Logger.getLogger(ResultsCellServlet.class.getName());
-
-
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         doGet(request, response);
     }
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        LOGGER.setLevel(Level.INFO);
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        DataFileManager resultsManager = (DataFileManager) this.getServletContext().getAttribute("DataFileManager");
 
+        request.setCharacterEncoding("utf8");
+        response.setCharacterEncoding("utf8");
+        response.setContentType("application/json");
 
-        response.setContentType("text/plain");
-        response.setCharacterEncoding("UTF-8");
-        PrintWriter writer = response.getWriter();
+        PrintWriter out = response.getWriter();
 
         if (request.getParameter("seqKey") != null && request.getParameter("groupKey") != null) {
             String seqKey = request.getParameter("seqKey");
             String groupKey = request.getParameter("groupKey");
 
-            DataFileManager resultsManager = (DataFileManager) this.getServletContext().getAttribute("DataFileManager");
-
-
             ResultsEntry entry = resultsManager.getMapper().getCell(seqKey, groupKey);
-            LOGGER.info("Fetched cell: " + entry);
-
-            writer.append(entry.getTooltipStats());
-            LOGGER.info("Fetched tooltip.");
-
-            writer.append(resultsManager.getMapper().tTestGenderDifference(seqKey));
-            LOGGER.info("Fetched tTest for gender.");
-
             PatternScanner scanner = resultsManager.getMapper().getPatternScanner(seqKey);
-            GroupDataFile file = entry.getGroupFileOfResult();
+            scanner.createInverseSearchFiles(this.getServletContext(), entry);
 
-            LOGGER.info("Fetched scanner and file: " + scanner + " | " + file);
-            if (file != null) {
-                scanner.createInverseSearchFiles(this.getServletContext(), entry);
-                writer.append(scanner.scanForCommonICDCodes());
-            }
+
+            JsonObject obj = new JsonObject();
+
+            obj.add("stats", entry.getTooltipStats());
+            obj.addProperty("tTest", resultsManager.getMapper().tTestGenderDifference(seqKey));
+            obj.add("commonCodes", scanner.getCommonCodesJSON(this.getServletContext(), entry.getGroupFileOfResult()));
+
+            out.print(obj);
         }
     }
 }

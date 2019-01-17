@@ -42,8 +42,8 @@ $(document).ready(function () {
     });
 
     $('#inverseSearch').on('click', function (event) {
-        $.post("/rescanDataSources", {}, function () {
-            console.log("Updating Sources.");
+        $.post("/createLinks", {}, function () {
+            console.log("Updated FullLink-Files.");
         });
     });
 

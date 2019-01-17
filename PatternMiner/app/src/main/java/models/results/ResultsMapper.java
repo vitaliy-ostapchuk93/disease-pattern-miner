@@ -451,7 +451,7 @@ public class ResultsMapper {
         return (int) (entryLower + v * (entryHigher - entryLower));
     }
 
-    public String tTestGenderDifference(String seqKey) {
+    public double tTestGenderDifference(String seqKey) {
         SortedMap<GenderAgeGroup, ResultsEntry> row = resultsTable.row(seqKey);
 
         if (row.size() >= 6) {
@@ -477,10 +477,11 @@ public class ResultsMapper {
                 }
             }
 
-
-            return "<b>tTest for difference in gender:</b> " + (Math.round(TestUtils.tTest(males, females) * 100.0) / 100.0) + "<br><br><br>";
+            return Math.round(TestUtils.tTest(males, females) * 100.0) / 100.0;
+            //return "<b>tTest for difference in gender:</b> " + (Math.round(TestUtils.tTest(males, females) * 100.0) / 100.0) + "<br><br><br>";
         }
-        return "<b>Too less columns to perform tTest.</b><br><br><br>";
+        //return "<b>Too less columns to perform tTest.</b><br><br><br>";
+        return -1;
     }
 
     public int getHighestPatternLength() {
