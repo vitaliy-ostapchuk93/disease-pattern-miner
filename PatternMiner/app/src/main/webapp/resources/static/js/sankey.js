@@ -663,20 +663,12 @@ var icdLinks = (function () {
 })();
 
 function getUnique(arr, comp) {
-
     const unique = arr
         .map(e => e[comp])
-
-        // store the keys of the unique objects
         .map((e, i, final) => final.indexOf(e) === i && i)
-
-        // eliminate the dead keys & store unique objects
         .filter(e => arr[e]).map(e => arr[e]);
-
     return unique;
 }
-
-
 
 var icdFilteredNodes = function (links) {
     let usedNodes = union(reduce(_.clone(links), 'source'), reduce(_.clone(links), 'target'));
@@ -704,13 +696,18 @@ function valueUpdate() {
     let groupKey = Math.round(age / 10) + '' + gender.charAt(0);
 
     if (icdNodes !== null && icdLinks !== null && icdLinks.hasOwnProperty(groupKey)) {
-        let currentLinks = $.extend(true, [], icdLinks[groupKey]);
-        let currentNodes = icdFilteredNodes(currentLinks);
+        let newLinks = $.extend(true, [], icdLinks[groupKey]);
+        let newNodes = icdFilteredNodes(newLinks);
 
-        if (currentLinks.length > 0 && currentNodes.length > 0) {
+        let currentCollapsed = new Set(reduce(_.clone(biHiSankey.collapsedNodes()), 'id'));
+        let currentExpanded = new Set(reduce(_.clone(biHiSankey.expandedNodes()), 'id'));
+
+        console.log(currentCollapsed, currentExpanded);
+
+        if (newLinks.length > 0 && newNodes.length > 0) {
             biHiSankey
-                .nodes(currentNodes)
-                .links(currentLinks)
+                .nodes(newNodes)
+                .links(newLinks)
                 .initializeNodes(function (node) {
                     node.state = node.parent ? "contained" : "collapsed";
                 })

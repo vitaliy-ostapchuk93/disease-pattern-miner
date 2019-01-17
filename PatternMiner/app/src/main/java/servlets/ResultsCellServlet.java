@@ -54,7 +54,7 @@ public class ResultsCellServlet extends HttpServlet {
             LOGGER.info("Fetched scanner and file: " + scanner + " | " + file);
             if (file != null) {
                 scanner.createInverseSearchFiles(this.getServletContext(), entry);
-                writer.append(scanner.scanForCommonICDCodes(this.getServletContext(), file));
+                writer.append(scanner.scanForCommonICDCodes());
             }
         }
     }

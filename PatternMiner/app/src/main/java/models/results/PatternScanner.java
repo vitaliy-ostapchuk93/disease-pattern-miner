@@ -29,64 +29,26 @@ public class PatternScanner {
     private String seqKey;
     private Pattern pattern;
 
-    private Map<String, List<ICDSequence>> matchingSequecesMap;
+    private List<ICDSequence> currentIcdSequences;
     private Map<String, Map<ICDLink, Long>> fullLinksMap;
 
     public PatternScanner(String seqKey) {
         this.seqKey = seqKey;
         createRegex();
 
-        this.matchingSequecesMap = new ConcurrentHashMap<>();
+        this.currentIcdSequences = new ArrayList<>();
         this.fullLinksMap = new ConcurrentHashMap<>();
 
         LOGGER.setLevel(Level.INFO);
     }
 
 
-    public String scanForCommonICDCodes(ServletContext servletContext, GroupDataFile dataFile) {
-        List<ICDSequence> matchingSequences = getMatchingSequences(servletContext, dataFile);
-        if (!matchingSequences.isEmpty()) {
-            return buildPatternsResultString(matchingSequences);
+    public String scanForCommonICDCodes() {
+        if (!currentIcdSequences.isEmpty()) {
+            return buildPatternsResultString(currentIcdSequences);
         } else {
             throw new EmptyDataSetException();
         }
-    }
-
-    public List<ICDSequence> getMatchingSequences(ServletContext servletContext, GroupDataFile dataFile) {
-        if (!matchingSequecesMap.containsKey(dataFile.getName())) {
-            LOGGER.info("Loading sequences (" + seqKey + ") for " + dataFile.getName() + " from file.");
-            return desirializeMatchingSequences(getMatchingSequencesFilePath(servletContext, dataFile));
-        }
-        LOGGER.info("Getting sequences (" + seqKey + ") for " + dataFile.getName() + " from memory.");
-        return matchingSequecesMap.get(dataFile.getName());
-    }
-
-    private void serializeMatchingSequences(List<ICDSequence> icdSequences, String path) {
-        try {
-            FileOutputStream fileOut = new FileOutputStream(path);
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeObject(icdSequences);
-            out.close();
-            fileOut.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private List<ICDSequence> desirializeMatchingSequences(String path) {
-        File scanFile = new File(path);
-        List<ICDSequence> icdSequences = null;
-        try {
-            FileInputStream fileInputStream = new FileInputStream(scanFile);
-            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
-            icdSequences = (List<ICDSequence>) objectInputStream.readObject();
-            objectInputStream.close();
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        return icdSequences;
     }
 
     private String buildPatternsResultString(List<ICDSequence> matchingSequences) {
@@ -242,11 +204,6 @@ public class PatternScanner {
         return sorted;
     }
 
-
-    private long interpolate(long entryLower, long entryHigher, float v) {
-        return (long) (entryLower + (v * (entryHigher - entryLower)));
-    }
-
     private JsonArray buildLinksJSON(Map<ICDLink, Long> linksMap) {
 
         Map<ICDLink, Long> filteredLinkMap = linksMap.entrySet().stream()
@@ -298,19 +255,16 @@ public class PatternScanner {
         File dir = new File(servletContext.getRealPath(getScanDir()));
         dir.mkdirs();
 
-        String matchingSequecesFilePath = getMatchingSequencesFilePath(servletContext, entry.getGroupFileOfResult());
-        if (!checkIfFileCreated(matchingSequecesFilePath)) {
-            createMatchingSequences(entry, matchingSequecesFilePath);
-        }
+        this.currentIcdSequences = scanForMatchingSequences(entry.getGroupFileOfResult());
 
         String commonCodesFilePath = getCommonCodesFilePath(servletContext, entry.getGroupFileOfResult());
         if (!checkIfFileCreated(commonCodesFilePath)) {
-            createCommonCodesJSON(entry, commonCodesFilePath);
+            createCommonCodesJSON(commonCodesFilePath);
         }
 
         String fullIcdLinksFilePath = getFullIcdLinksFilePath(servletContext, entry.getGroupFileOfResult());
         if (!checkIfFileCreated(fullIcdLinksFilePath)) {
-            createIcdLinksJSON(entry, fullIcdLinksFilePath, servletContext);
+            createIcdLinksJSON(entry, fullIcdLinksFilePath);
         }
     }
 
@@ -324,20 +278,15 @@ public class PatternScanner {
         return servletContext.getRealPath(getScanDir() + File.separator + scanName);
     }
 
-    private String getMatchingSequencesFilePath(ServletContext servletContext, GroupDataFile file) {
-        String scanName = file.getName().replace(".csv", ".icds").replace("_sorted", "");
-        return servletContext.getRealPath(getScanDir() + File.separator + scanName);
-    }
 
     private String getScanDir() {
         return ResultsDataFile.DIR_PATH + File.separator + "scan_ " + seqKey;
     }
 
-    private void createIcdLinksJSON(ResultsEntry entry, String fullIcdLinksFilePath, ServletContext servletContext) {
+    private void createIcdLinksJSON(ResultsEntry entry, String fullIcdLinksFilePath) {
         List<ICDLink> icdLinks = new ArrayList<>();
-        List<ICDSequence> matchingSequences = getMatchingSequences(servletContext, entry.getGroupFileOfResult());
 
-        for (ICDSequence sequence : matchingSequences) {
+        for (ICDSequence sequence : currentIcdSequences) {
             icdLinks.addAll(sequence.getIcdLinks());
         }
 
@@ -349,9 +298,7 @@ public class PatternScanner {
         saveJson(fullLinksJSON, fullIcdLinksFilePath);
     }
 
-    private void createCommonCodesJSON(ResultsEntry entry, String commonCodesFilePath) {
-        List<ICDSequence> matchingSequences = matchingSequecesMap.get(entry.getGroupFileOfResult().getName());
-
+    private void createCommonCodesJSON(String commonCodesFilePath) {
         JsonObject codes = new JsonObject();
         JsonArray commonCodes = new JsonArray();
 
@@ -361,7 +308,7 @@ public class PatternScanner {
                 group.addProperty("name", DiagnosesGroup.values()[Integer.parseInt(key)].name());
                 group.addProperty("ordinal", DiagnosesGroup.values()[Integer.parseInt(key)].ordinal());
 
-                Map<ICDCode, Integer> topTen = getMatchingCodesMap(matchingSequences).get(Integer.parseInt(key)).entrySet().stream()
+                Map<ICDCode, Integer> topTen = getMatchingCodesMap(currentIcdSequences).get(Integer.parseInt(key)).entrySet().stream()
                         .sorted(comparingByValue(Comparator.reverseOrder())).limit(10)
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
@@ -383,12 +330,6 @@ public class PatternScanner {
         codes.add("commonCodes", commonCodes);
 
         saveJson(codes, commonCodesFilePath);
-    }
-
-    private void createMatchingSequences(ResultsEntry entry, String matchingSequecesFilePath) {
-        List<ICDSequence> icdSequences = scanForMatchingSequences(entry.getGroupFileOfResult());
-        serializeMatchingSequences(icdSequences, matchingSequecesFilePath);
-        this.matchingSequecesMap.put(entry.getGroupFileOfResult().getName(), icdSequences);
     }
 
     private boolean checkIfFileCreated(String path) {

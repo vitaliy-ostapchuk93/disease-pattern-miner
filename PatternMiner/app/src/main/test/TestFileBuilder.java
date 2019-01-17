@@ -96,7 +96,7 @@ public class TestFileBuilder {
             }
         }
         appendUtils.closeAllWriters();
-        LOGGER.info("Found " + counter + " patients with codes of Interest.");          // 1892889 (patient-sequences)
+        LOGGER.info("Found " + counter + " patients with codes of Interest.");          // 1.892.889 (patient-sequences)
     }
 
 
