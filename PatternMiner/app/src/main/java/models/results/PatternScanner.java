@@ -136,60 +136,70 @@ public class PatternScanner {
         Map<ICDLink, Long> fullLinks = new HashMap<>();
         Map<ICDCode, Long> fullCommonCodes = new HashMap<>();
 
-        try {
-            LineIterator it = FileUtils.lineIterator(entry.getGroupFileOfResult(), "UTF-8");
+        String commonCodesFilePath = getCommonCodesFilePath(servletContext, entry.getGroupFileOfResult());
+        String icdLinksFilePath = getFullIcdLinksFilePath(servletContext, entry.getGroupFileOfResult());
 
-            ICDSequence sequence = null;
-            while (it.hasNext()) {
-                String[] p = it.nextLine().split(",");
+        boolean checkCommonCodes = checkIfFileCreated(commonCodesFilePath);
+        boolean checkIcdLinks = checkIfFileCreated(icdLinksFilePath);
 
-                //first sequence
-                if (sequence == null) {
-                    sequence = new ICDSequence(p[0]);
-                }
 
-                //different sequence id
-                if (!p[0].equals(sequence.getId())) {
-                    if (sequence.getFilteredDiagnosesCount() > 2) {
-                        String formatedSeq = sequence.getFormatedSeqSPMF(14);
+        if (!checkCommonCodes || !checkIcdLinks) {
+            try {
+                LineIterator it = FileUtils.lineIterator(entry.getGroupFileOfResult(), "UTF-8");
 
-                        Matcher m = pattern.matcher(formatedSeq);
-                        if (m.find()) {
-                            //commonCodes
-                            Map<ICDCode, Long> icdCommonCodes = sequence.getAllIcdCodes().stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-                            icdCommonCodes.forEach((k, v) -> fullCommonCodes.merge(k, v, (v1, v2) -> v1 + v2));
+                ICDSequence sequence = null;
+                while (it.hasNext()) {
+                    String[] p = it.nextLine().split(",");
 
-                            // icdLinks
-                            Map<ICDLink, Long> icdLinks = sequence.getIcdLinks().stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-                            icdLinks.forEach((k, v) -> fullLinks.merge(k, v, (v1, v2) -> v1 + v2));
-                        }
+                    //first sequence
+                    if (sequence == null) {
+                        sequence = new ICDSequence(p[0]);
                     }
 
-                    sequence = new ICDSequence(p[0]);
-                }
+                    //different sequence id
+                    if (!p[0].equals(sequence.getId())) {
+                        if (sequence.getFilteredDiagnosesCount() > 2) {
+                            String formatedSeq = sequence.getFormatedSeqSPMF(14);
 
-                //same sequence
-                if (p.length >= 2) {
-                    sequence.addDiagnoses(p[1], Arrays.copyOfRange(p, 2, p.length));
-                }
+                            Matcher m = pattern.matcher(formatedSeq);
+                            if (m.find()) {
+                                //commonCodes
+                                if (!checkCommonCodes) {
+                                    Map<ICDCode, Long> icdCommonCodes = sequence.getAllIcdCodes().stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+                                    icdCommonCodes.forEach((k, v) -> fullCommonCodes.merge(k, v, (v1, v2) -> v1 + v2));
+                                }
 
+                                // icdLinks
+                                if (!checkIcdLinks) {
+                                    Map<ICDLink, Long> icdLinks = sequence.getIcdLinks().stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+                                    icdLinks.forEach((k, v) -> fullLinks.merge(k, v, (v1, v2) -> v1 + v2));
+                                }
+                            }
+                        }
+
+                        sequence = new ICDSequence(p[0]);
+                    }
+
+                    //same sequence
+                    if (p.length >= 2) {
+                        sequence.addDiagnoses(p[1], Arrays.copyOfRange(p, 2, p.length));
+                    }
+
+                }
+                it.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            it.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+
+
+            if (!checkCommonCodes) {
+                saveJson(buildCommonCodesJSON(fullCommonCodes), commonCodesFilePath);
+            }
+
+            if (!checkIfFileCreated(icdLinksFilePath)) {
+                saveJson(buildLinksJSON(fullLinks), icdLinksFilePath);
+            }
         }
-
-
-        String commonCodesFilePath = getCommonCodesFilePath(servletContext, entry.getGroupFileOfResult());
-        if (!checkIfFileCreated(commonCodesFilePath)) {
-            saveJson(buildCommonCodesJSON(fullCommonCodes), commonCodesFilePath);
-        }
-
-        String icdLinksFilePath = getFullIcdLinksFilePath(servletContext, entry.getGroupFileOfResult());
-        if (!checkIfFileCreated(icdLinksFilePath)) {
-            saveJson(buildLinksJSON(fullLinks), icdLinksFilePath);
-        }
-
     }
 
     private JsonElement buildCommonCodesJSON(Map<ICDCode, Long> fullCommonCodes) {
