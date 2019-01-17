@@ -198,6 +198,11 @@ public class PatternScanner {
         String[] keys = seqKey.split(" ");
         for (String key : keys) {
             int group = Integer.parseInt(key);
+
+            if (group == -1) {
+                continue;
+            }
+
             if (!commonCodes.containsKey(Integer.parseInt(key))) {
                 commonCodes.put(group, new HashMap<>());
             }
