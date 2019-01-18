@@ -53,6 +53,7 @@ public class ICDSequence implements Serializable {
 
     public void addDiagnoses(ICDEntry entry) {
         diagnoses.add(entry);
+        Collections.sort(diagnoses);
     }
 
     public void addDiagnoses(String time, String[] codes) {
@@ -358,4 +359,37 @@ public class ICDSequence implements Serializable {
 
         return icdLinks;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof ICDSequence)) {
+            return false;
+        }
+        if (this == obj) {
+            return true;
+        }
+
+        ICDSequence icdSequence = (ICDSequence) obj;
+        return getId().equals(icdSequence.getId());
+
+    }
+
+    public boolean canCombine(ICDSequence other) {
+        return this.id.equals(other.id);
+    }
+
+
+    public ICDSequence combine(ICDSequence other) {
+        if (!equals(other)) {
+            throw new IllegalArgumentException();
+        }
+        ICDSequence combinedSequence = new ICDSequence(this.id);
+        this.diagnoses.forEach(combinedSequence::addDiagnoses);
+        other.diagnoses.forEach(combinedSequence::addDiagnoses);
+        return combinedSequence;
+    }
+
 }

@@ -9,18 +9,21 @@ import javax.servlet.ServletContext;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static java.util.Map.Entry.comparingByValue;
+import static java.util.stream.Collectors.*;
 
 public class PatternScanner {
 
     private final static Logger LOGGER = Logger.getLogger(PatternScanner.class.getName());
+    private static final String COMMA = ",";
 
     private String seqKey;
     private Pattern pattern;
@@ -128,79 +131,74 @@ public class PatternScanner {
         createInverseSearchFiles(servletContext, cell.getValue());
     }
 
-    public void createInverseSearchFiles(ServletContext servletContext, ResultsEntry entry) {
-        File dir = new File(servletContext.getRealPath(getScanDir()));
-        dir.mkdirs();
+    public static <T, AI, I, AO, R> Collector<T, ?, R> groupingAdjacent(
+            BiPredicate<? super T, ? super T> keepTogether,
+            Collector<? super T, AI, ? extends I> inner,
+            Collector<I, AO, R> outer
+    ) {
+        AI EMPTY = (AI) new Object();
 
-        Map<ICDLink, Long> fullLinks = new HashMap<>();
-        Map<ICDCode, Long> fullCommonCodes = new HashMap<>();
+        // Container to accumulate adjacent possibly null elements.  Adj can be in one of 3 states:
+        // - Before first element: curGrp == EMPTY
+        // - After first element but before first group boundary: firstGrp == EMPTY, curGrp != EMPTY
+        // - After at least one group boundary: firstGrp != EMPTY, curGrp != EMPTY
+        class Adj {
 
-        String commonCodesFilePath = getCommonCodesFilePath(servletContext, entry.getGroupFileOfResult());
-        String icdLinksFilePath = getFullIcdLinksFilePath(servletContext, entry.getGroupFileOfResult());
+            T first, last;     // first and last elements added to this container
+            AI firstGrp = EMPTY, curGrp = EMPTY;
+            AO acc = outer.supplier().get();  // accumlator for completed groups
 
-        boolean checkCommonCodes = checkIfFileCreated(commonCodesFilePath);
-        boolean checkIcdLinks = checkIfFileCreated(icdLinksFilePath);
-
-        if (!checkCommonCodes || !checkIcdLinks) {
-            Path groupFile = Paths.get(entry.getGroupFileOfResult().getPath());
-            OpenOption[] options = new OpenOption[]{StandardOpenOption.READ};
-
-            try {
-                InputStream in = Files.newInputStream(groupFile, options);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-
-                ICDSequence sequence = null;
-                String line = null;
-                while ((line = reader.readLine()) != null) {
-                    String[] p = line.split(",");
-
-                    //first sequence
-                    if (sequence == null) {
-                        sequence = new ICDSequence(p[0]);
-                    }
-
-                    //different sequence id
-                    if (!p[0].equals(sequence.getId())) {
-                        if (sequence.getFilteredDiagnosesCount() > 2) {
-                            String formatedSeq = sequence.getFormatedSeqSPMF();
-
-                            Matcher m = pattern.matcher(formatedSeq);
-                            if (m.find()) {
-                                //commonCodes
-                                if (!checkCommonCodes) {
-                                    Map<ICDCode, Long> icdCommonCodes = sequence.getAllIcdCodes().stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-                                    icdCommonCodes.forEach((k, v) -> fullCommonCodes.merge(k, v, (v1, v2) -> v1 + v2));
-                                }
-
-                                // icdLinks
-                                if (!checkIcdLinks) {
-                                    Map<ICDLink, Long> icdLinks = sequence.getIcdLinks().stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-                                    icdLinks.forEach((k, v) -> fullLinks.merge(k, v, (v1, v2) -> v1 + v2));
-                                }
-                            }
-                        }
-
-                        sequence = new ICDSequence(p[0]);
-                    }
-
-                    //same sequence
-                    if (p.length >= 2) {
-                        sequence.addDiagnoses(p[1], Arrays.copyOfRange(p, 2, p.length));
-                    }
+            void add(T t) {
+                if (curGrp == EMPTY) /* first element */ {
+                    first = t;
+                    curGrp = inner.supplier().get();
+                } else if (!keepTogether.test(last, t)) /* group boundary */ {
+                    addGroup(curGrp);
+                    curGrp = inner.supplier().get();
                 }
-            } catch (IOException e) {
-                LOGGER.warning(e.getMessage());
+                inner.accumulator().accept(curGrp, last = t);
             }
 
-            if (!checkCommonCodes) {
-                saveJson(buildCommonCodesJSON(fullCommonCodes), commonCodesFilePath);
+            void addGroup(AI group) /* group can be EMPTY, in which case this should do nothing */ {
+                if (firstGrp == EMPTY) {
+                    firstGrp = group;
+                } else if (group != EMPTY) {
+                    outer.accumulator().accept(acc, inner.finisher().apply(group));
+                }
             }
 
-            if (!checkIfFileCreated(icdLinksFilePath)) {
-                saveJson(buildLinksJSON(fullLinks), icdLinksFilePath);
+            Adj merge(Adj other) {
+                if (other.curGrp == EMPTY) /* other is empty */ {
+                    return this;
+                } else if (this.curGrp == EMPTY) /* this is empty */ {
+                    return other;
+                } else if (!keepTogether.test(last, other.first)) /* boundary between this and other*/ {
+                    addGroup(this.curGrp);
+                    addGroup(other.firstGrp);
+                } else if (other.firstGrp == EMPTY) /* other container is single-group. prepend this.curGrp to other.curGrp*/ {
+                    other.curGrp = inner.combiner().apply(this.curGrp, other.curGrp);
+                } else /* other Adj contains a boundary.  this.curGrp+other.firstGrp form a complete group. */ {
+                    addGroup(inner.combiner().apply(this.curGrp, other.firstGrp));
+                }
+                this.acc = outer.combiner().apply(this.acc, other.acc);
+                this.curGrp = other.curGrp;
+                this.last = other.last;
+                return this;
+            }
+
+            R finish() {
+                AO combined = outer.supplier().get();
+                if (curGrp != EMPTY) {
+                    addGroup(curGrp);
+                    assert firstGrp != EMPTY;
+                    outer.accumulator().accept(combined, inner.finisher().apply(firstGrp));
+                }
+                return outer.finisher().apply(outer.combiner().apply(combined, acc));
             }
         }
+        return Collector.of(Adj::new, Adj::add, Adj::merge, Adj::finish);
     }
+
 
     private JsonElement buildCommonCodesJSON(Map<ICDCode, Long> fullCommonCodes) {
         Map<Integer, Map<ICDCode, Double>> commonCodes = new HashMap<>();
@@ -340,5 +338,77 @@ public class PatternScanner {
             }
         }
         return jsonElement;
+    }
+
+    public void createInverseSearchFiles(ServletContext servletContext, ResultsEntry entry) {
+        File dir = new File(servletContext.getRealPath(getScanDir()));
+        dir.mkdirs();
+
+        Map<ICDLink, Long> fullLinks = new HashMap<>();
+        Map<ICDCode, Long> fullCommonCodes = new HashMap<>();
+
+        String commonCodesFilePath = getCommonCodesFilePath(servletContext, entry.getGroupFileOfResult());
+        String icdLinksFilePath = getFullIcdLinksFilePath(servletContext, entry.getGroupFileOfResult());
+
+        boolean checkCommonCodes = checkIfFileCreated(commonCodesFilePath);
+        boolean checkIcdLinks = checkIfFileCreated(icdLinksFilePath);
+        
+        if (!checkCommonCodes || !checkIcdLinks) {
+            Path groupFile = Paths.get(entry.getGroupFileOfResult().getPath());
+            OpenOption[] options = new OpenOption[]{StandardOpenOption.READ};
+            Pattern comma = Pattern.compile(COMMA);
+
+            try {
+                InputStream in = Files.newInputStream(groupFile, options);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+                reader.lines()
+                        .map(line -> {
+                            String[] arr = comma.split(line);
+                            if (arr.length >= 2) {
+                                ICDSequence sequence = new ICDSequence(arr[0]);
+                                ICDEntry icdEntry = new ICDEntry(arr[1], Arrays.copyOfRange(arr, 2, arr.length));
+                                sequence.addDiagnoses(icdEntry);
+                                return sequence;
+                            }
+                            return null;
+                        })
+                        .collect(
+                                groupingAdjacent(
+                                        ICDSequence::canCombine,                // test to determine if two adjacent elements go together
+                                        reducing(ICDSequence::combine),         // collector to use for combining the adjacent elements
+                                        mapping(Optional::get, toList())        // collector to group up combined elements
+                                )
+                        ).stream()
+                        .filter(sequence -> sequence.getFilteredDiagnosesCount() > 2)
+                        .filter(sequence -> pattern.matcher(sequence.getFormatedSeqSPMF()).find())
+                        .forEach(sequence -> {
+                            //common codes
+                            if (!checkCommonCodes) {
+                                sequence.getAllIcdCodes().stream()
+                                        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                        .forEach((k, v) -> fullCommonCodes.merge(k, v, (v1, v2) -> v1 + v2));
+                            }
+
+                            // icdLinks
+                            if (!checkIcdLinks) {
+                                sequence.getIcdLinks().stream()
+                                        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                        .forEach((k, v) -> fullLinks.merge(k, v, (v1, v2) -> v1 + v2));
+                            }
+                        });
+
+            } catch (IOException e) {
+                LOGGER.warning(e.getMessage());
+            }
+
+            if (!checkCommonCodes) {
+                saveJson(buildCommonCodesJSON(fullCommonCodes), commonCodesFilePath);
+            }
+
+            if (!checkIfFileCreated(icdLinksFilePath)) {
+                saveJson(buildLinksJSON(fullLinks), icdLinksFilePath);
+            }
+        }
     }
 }

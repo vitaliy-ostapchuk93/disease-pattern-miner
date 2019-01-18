@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 
-public class ICDEntry implements Serializable {
+public class ICDEntry implements Serializable, Comparable<ICDEntry> {
     private final DateTime date;
     private final List<ICDCode> icdCodes;
 
@@ -52,5 +52,10 @@ public class ICDEntry implements Serializable {
             }
         }
         return codes;
+    }
+
+    @Override
+    public int compareTo(ICDEntry entry) {
+        return this.date.compareTo(entry.date);
     }
 }

@@ -2,7 +2,7 @@ package models.data;
 
 import java.io.Serializable;
 
-public class ICDCode implements Comparable<ICDCode>, Serializable {
+public class ICDCode implements Serializable {
 
     private final DiagnosesGroup group;
     private final String code;
@@ -51,10 +51,5 @@ public class ICDCode implements Comparable<ICDCode>, Serializable {
     @Override
     public int hashCode() {
         return getSmallCode().hashCode();
-    }
-
-    @Override
-    public int compareTo(ICDCode icdCode) {
-        return getSmallCode().compareTo(icdCode.getSmallCode());
     }
 }
