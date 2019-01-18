@@ -63,26 +63,6 @@ $(document).ready(function () {
                         commonCodes += '</div>';
                     });
 
-                    /*
-                    for (Map.Entry<ICDCode, Integer> code : topTen.entrySet()) {
-                        float p = code.getValue() * 100.0f / matchingSequences.size();
-                        if (p >= 5) {
-                            patterns.append("<div class=\"control\">");
-                            patterns.append("<div class=\"tags has-addons\">");
-                            patterns.append("<span class=\"tag\">").append(code.getKey().getSmallCode()).append("</span>");
-                            patterns.append("<span class=\"tag is-info\">");
-
-                            DecimalFormat df = new DecimalFormat();
-                            df.setMaximumFractionDigits(2);
-                            patterns.append(df.format(p) + " %");
-
-                            patterns.append("</span>");
-                            patterns.append("</div>");
-                            patterns.append("</div>");
-                        }
-                    }
-                    */
-
                     tooltip.html(
                         "<b>Pattern found in:</b><br>" + cellStats['stats']['fileOfResult'] + "<br>" +
                         " [ absolute support = " + cellStats['stats']['absSup'] +

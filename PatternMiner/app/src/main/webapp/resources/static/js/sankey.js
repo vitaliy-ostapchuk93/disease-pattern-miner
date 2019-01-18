@@ -16,6 +16,14 @@ var reduce = function (xs, key) {
     }, []);
 };
 
+Array.prototype.sum = function (prop) {
+    var total = 0
+    for (var i = 0, _len = this.length; i < _len; i++) {
+        total += this[i][prop]
+    }
+    return total
+};
+
 var icdGroups = (function () {
     let groups = null;
     $.ajax({
@@ -466,6 +474,8 @@ function update() {
                 })
                 .style("fill-opacity", OPACITY.LINK_DEFAULT);
 
+            let outSum = g.sourceLinks.filter(link => typeof link['target']['id'] === 'string').sum('value');
+            let inSum = g.targetLinks.filter(link => typeof link['source']['id'] === 'string').sum('value');
 
             tooltip
                 .style("left", g.x + MARGIN.LEFT + "px")
@@ -475,7 +485,7 @@ function update() {
                 .style("opacity", 1).select(".value")
                 .text(function () {
                     var additionalInstructions = g.children.length ? "\n(Double click to expand)" : "\n(Double click to colapse)";
-                    return formatIcdCode(g) + g.name + "\nSupport: " + formatFlow(g.netFlow) + additionalInstructions;
+                    return formatIcdCode(g) + g.name + "\nTotal In: " + formatFlow(inSum) + "\nTotal Out: " + formatFlow(outSum) + "\nNetFlow: " + formatFlow(g.netFlow) + additionalInstructions;
                 });
         }
     });

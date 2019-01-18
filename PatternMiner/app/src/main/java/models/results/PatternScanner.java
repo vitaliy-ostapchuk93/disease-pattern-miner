@@ -4,11 +4,10 @@ import com.google.common.collect.Table;
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import models.data.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.LineIterator;
 
 import javax.servlet.ServletContext;
 import java.io.*;
+import java.nio.file.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -142,14 +141,18 @@ public class PatternScanner {
         boolean checkCommonCodes = checkIfFileCreated(commonCodesFilePath);
         boolean checkIcdLinks = checkIfFileCreated(icdLinksFilePath);
 
-
         if (!checkCommonCodes || !checkIcdLinks) {
+            Path groupFile = Paths.get(entry.getGroupFileOfResult().getPath());
+            OpenOption[] options = new OpenOption[]{StandardOpenOption.READ};
+
             try {
-                LineIterator it = FileUtils.lineIterator(entry.getGroupFileOfResult(), "UTF-8");
+                InputStream in = Files.newInputStream(groupFile, options);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
                 ICDSequence sequence = null;
-                while (it.hasNext()) {
-                    String[] p = it.nextLine().split(",");
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    String[] p = line.split(",");
 
                     //first sequence
                     if (sequence == null) {
@@ -159,7 +162,7 @@ public class PatternScanner {
                     //different sequence id
                     if (!p[0].equals(sequence.getId())) {
                         if (sequence.getFilteredDiagnosesCount() > 2) {
-                            String formatedSeq = sequence.getFormatedSeqSPMF(14);
+                            String formatedSeq = sequence.getFormatedSeqSPMF();
 
                             Matcher m = pattern.matcher(formatedSeq);
                             if (m.find()) {
@@ -184,13 +187,10 @@ public class PatternScanner {
                     if (p.length >= 2) {
                         sequence.addDiagnoses(p[1], Arrays.copyOfRange(p, 2, p.length));
                     }
-
                 }
-                it.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.warning(e.getMessage());
             }
-
 
             if (!checkCommonCodes) {
                 saveJson(buildCommonCodesJSON(fullCommonCodes), commonCodesFilePath);
