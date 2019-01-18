@@ -41,10 +41,4 @@ $(document).ready(function () {
         })
     });
 
-    $('#inverseSearch').on('click', function (event) {
-        $.post("/createLinks", {}, function () {
-            console.log("Updated FullLink-Files.");
-        });
-    });
-
 });

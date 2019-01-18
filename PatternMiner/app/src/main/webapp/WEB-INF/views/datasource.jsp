@@ -66,17 +66,4 @@
         </div>
     </div>
 
-    <div class="field has-addons is-horizontal">
-        <div class="field-label is-normal">
-            <label class="label has-text-light has-text-left">Inverse-Search</label>
-        </div>
-        <div class="field-body">
-            <p class="control">
-                <a class="button is-link" id="inverseSearch">
-                    Create Inverse-Search-Data for Common Patterns
-                </a>
-            </p>
-        </div>
-    </div>
-
 </article>

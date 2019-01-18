@@ -56,7 +56,7 @@
                                        data-tooltip="${requestScope.MAPPER.getPatternFormatted(requestScope.patternKey)}">
                                         <div class="buttons has-addons">
                                             <c:forEach var='pattern'
-                                                       items='${requestScope.MAPPER.getPatternList(requestScope.patternKey)}'>
+                                                       items='${requestScope.MAPPER.getPatternArray(requestScope.patternKey)}'>
                                     <span class="button"
                                           style="background-color: ${requestScope.MAPPER.getPatternColor(pattern)}">${pattern}</span>
                                             </c:forEach>

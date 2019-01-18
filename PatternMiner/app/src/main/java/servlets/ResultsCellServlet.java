@@ -1,7 +1,6 @@
 package servlets;
 
 import com.google.gson.JsonObject;
-import models.results.PatternScanner;
 import models.results.ResultsEntry;
 
 import javax.servlet.annotation.WebServlet;
@@ -32,15 +31,13 @@ public class ResultsCellServlet extends HttpServlet {
             String groupKey = request.getParameter("groupKey");
 
             ResultsEntry entry = resultsManager.getMapper().getCell(seqKey, groupKey);
-            PatternScanner scanner = resultsManager.getMapper().getPatternScanner(seqKey);
-            scanner.createInverseSearchFiles(this.getServletContext(), entry);
-
+            resultsManager.getMapper().createInverseSearchFiles(this.getServletContext(), seqKey, entry);
 
             JsonObject obj = new JsonObject();
 
             obj.add("stats", entry.getTooltipStats());
             obj.addProperty("tTest", resultsManager.getMapper().tTestGenderDifference(seqKey));
-            obj.add("commonCodes", scanner.getCommonCodesJSON(this.getServletContext(), entry.getGroupFileOfResult()));
+            obj.add("commonCodes", resultsManager.getMapper().getPatternScanner(seqKey).getCommonCodesJSON(this.getServletContext(), entry.getGroupFileOfResult()));
 
             out.print(obj);
         }

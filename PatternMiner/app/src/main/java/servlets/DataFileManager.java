@@ -44,6 +44,7 @@ public class DataFileManager implements ServletContextListener, DataFileListener
     @Override
     public void contextDestroyed(ServletContextEvent event) {
         LOGGER.info("DataFileManager destroyed.");
+        this.mapper.getInverseSearch().interrupt();
     }
 
     /**

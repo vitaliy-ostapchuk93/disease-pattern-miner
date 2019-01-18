@@ -30,6 +30,7 @@ public class ResultsMapper {
     private List<ResultsFilter> filterList;
 
     private QueueLinkedMap<String, PatternScanner> patternScannerMap;
+    private InverseSearchThread inverseSearch;
 
     public ResultsMapper() {
         LOGGER.setLevel(Level.INFO);
@@ -37,6 +38,8 @@ public class ResultsMapper {
         this.resultsTable = TreeBasedTable.create();
         this.filterList = new ArrayList<>();
         this.patternScannerMap = new QueueLinkedMap<>(5);
+
+        this.inverseSearch = new InverseSearchThread(this);
     }
 
     public TreeBasedTable<String, GenderAgeGroup, ResultsEntry> getResultsTable() {
@@ -447,10 +450,6 @@ public class ResultsMapper {
         return column;
     }
 
-    private int interpolate(double entryLower, double entryHigher, float v) {
-        return (int) (entryLower + v * (entryHigher - entryLower));
-    }
-
     public double tTestGenderDifference(String seqKey) {
         SortedMap<GenderAgeGroup, ResultsEntry> row = resultsTable.row(seqKey);
 
@@ -511,16 +510,18 @@ public class ResultsMapper {
         PatternScanner patternScanner = getPatternScanner(patternKey);
 
         for (ResultsEntry entry : resultsTable.row(patternKey).values()) {
-            patternScanner.createInverseSearchFiles(servletContext, entry);
+            createInverseSearchFiles(servletContext, patternKey, entry);
         }
 
         return patternScanner.getCompleteIcdLinksJSON(resultsTable.row(patternKey), servletContext);
     }
 
-    public void createInverseSearchFiles(ServletContext servletContext) {
-        for (Table.Cell<String, GenderAgeGroup, ResultsEntry> cell : applyTopPercentGroupFilter(getFilteredResultsTable(), 3.0).cellSet()) {
-            PatternScanner patternScanner = getPatternScanner(cell.getRowKey());
-            patternScanner.createInverseSearchFiles(servletContext, cell);
-        }
+    public void createInverseSearchFiles(ServletContext servletContext, String patternKey, ResultsEntry entry) {
+        this.inverseSearch.resetTimestamp();
+        getPatternScanner(patternKey).createInverseSearchFiles(servletContext, entry);
+    }
+
+    public InverseSearchThread getInverseSearch() {
+        return inverseSearch;
     }
 }
