@@ -352,7 +352,7 @@ public class PatternScanner {
 
         boolean checkCommonCodes = checkIfFileCreated(commonCodesFilePath);
         boolean checkIcdLinks = checkIfFileCreated(icdLinksFilePath);
-        
+
         if (!checkCommonCodes || !checkIcdLinks) {
             Path groupFile = Paths.get(entry.getGroupFileOfResult().getPath());
             OpenOption[] options = new OpenOption[]{StandardOpenOption.READ};

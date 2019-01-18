@@ -18,7 +18,7 @@ public class RescanDataSourcesServlet extends HttpServlet {
         LOGGER.info("Create FullLinks-Files.");
 
         DataFileManager resultsManager = (DataFileManager) this.getServletContext().getAttribute("DataFileManager");
-        resultsManager.getMapper().createFullICDLinksFiles(this.getServletContext());
+        resultsManager.getMapper().createInverseSearchFiles(this.getServletContext());
 
         doGet(request, response);
     }

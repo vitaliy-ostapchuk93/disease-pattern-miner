@@ -20,7 +20,7 @@
             <a class="button has-background-link" style="border:none;"
                data-tooltip="${requestScope.MAPPER.getPatternFormatted(seq.key)}">
                 <div class="buttons has-addons">
-                    <c:forEach var='item' items='${requestScope.MAPPER.getPatternList(seq.key)}'>
+                    <c:forEach var='item' items='${requestScope.MAPPER.getPatternArray(seq.key)}'>
                         <c:if test="${item eq '-1'}">
                             <span class="button"
                                   style="background-color: ${requestScope.DiagnosesGroupsHelper.getColorByGroup(item)}; border-right: 5px solid #3273dc; border-left: 5px solid #3273dc;">${item}</span>

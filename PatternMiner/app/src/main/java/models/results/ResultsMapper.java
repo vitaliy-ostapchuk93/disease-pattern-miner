@@ -407,7 +407,7 @@ public class ResultsMapper {
 
     public String getPatternFormatted(String pattern) {
         String formattedSeq = "";
-        for (String key : getPatternList(pattern)) {
+        for (String key : getPatternArray(pattern)) {
             if (Integer.parseInt(key) == -1) {
                 formattedSeq += DiagnosesGroup.TIME_GAP.name() + " | ";
             } else {
@@ -417,7 +417,7 @@ public class ResultsMapper {
         return formattedSeq;
     }
 
-    public String[] getPatternList(String pattern) {
+    public String[] getPatternArray(String pattern) {
         return pattern.split(" ");
 
     }
@@ -478,9 +478,7 @@ public class ResultsMapper {
             }
 
             return Math.round(TestUtils.tTest(males, females) * 100.0) / 100.0;
-            //return "<b>tTest for difference in gender:</b> " + (Math.round(TestUtils.tTest(males, females) * 100.0) / 100.0) + "<br><br><br>";
         }
-        //return "<b>Too less columns to perform tTest.</b><br><br><br>";
         return -1;
     }
 
@@ -519,7 +517,7 @@ public class ResultsMapper {
         return patternScanner.getCompleteIcdLinksJSON(resultsTable.row(patternKey), servletContext);
     }
 
-    public void createFullICDLinksFiles(ServletContext servletContext) {
+    public void createInverseSearchFiles(ServletContext servletContext) {
         for (Table.Cell<String, GenderAgeGroup, ResultsEntry> cell : applyTopPercentGroupFilter(getFilteredResultsTable(), 3.0).cellSet()) {
             PatternScanner patternScanner = getPatternScanner(cell.getRowKey());
             patternScanner.createInverseSearchFiles(servletContext, cell);
