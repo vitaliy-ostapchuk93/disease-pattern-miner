@@ -28,6 +28,7 @@ public class ResultsServlet extends HttpServlet {
             resultsManager.fillResultMapper(set);
 
             resultsManager.getMapper().getInverseSearch().setContext(this.getServletContext());
+            resultsManager.getMapper().getInverseSearch().start();
         }
 
         resultsManager.getMapper().getInverseSearch().resetTimestamp();
