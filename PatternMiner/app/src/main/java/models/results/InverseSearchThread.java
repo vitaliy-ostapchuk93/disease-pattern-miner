@@ -12,6 +12,8 @@ import java.util.logging.Logger;
 public class InverseSearchThread extends Thread {
     protected static Logger LOGGER = Logger.getLogger(InverseSearchThread.class.getName());
 
+    private static final int PAUSE_DURATION = 300;
+
     private DateTime timestamp;
     private ResultsMapper resultsMapper;
     private ServletContext servletContext;
@@ -28,8 +30,8 @@ public class InverseSearchThread extends Thread {
         }
         for (Table.Cell<String, GenderAgeGroup, ResultsEntry> cell : resultsMapper.getFilteredResultsTable().cellSet()) {
             try {
-                while (Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() < 60 * 3) {                             //wait 3 min with no user action
-                    waitForResume(Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() + 5);
+                while (Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() < PAUSE_DURATION) {                             //wait 3 min with no user action
+                    waitForResume(PAUSE_DURATION - Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() + 5);
                 }
                 LOGGER.info("Creating Inverse-Search-Files for cell [" + cell.getRowKey() + " , " + cell.getColumnKey() + "]");
 
