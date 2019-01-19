@@ -274,7 +274,7 @@ public class PatternScanner {
 
 
     private String getScanDir() {
-        return ResultsDataFile.DIR_PATH + File.separator + "scan_ " + seqKey;
+        return ResultsDataFile.DIR_PATH + File.separator + "scans" + File.separator + "scan_ " + seqKey;
     }
 
     private boolean checkIfFileCreated(String path) {

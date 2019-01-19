@@ -2,7 +2,6 @@ package servlets;
 
 import models.data.DataFile;
 import models.data.DiagnosesGroupHelper;
-import models.results.InverseSearchThread;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -28,13 +27,12 @@ public class ResultsServlet extends HttpServlet {
             Set<DataFile> set = dataManager.getResultFileSet();
             resultsManager.fillResultMapper(set);
 
-            InverseSearchThread inverseSearch = resultsManager.getMapper().getInverseSearch();
-            inverseSearch.setContext(this.getServletContext());
-            inverseSearch.start();
+            resultsManager.getMapper().getInverseSearch().setContext(this.getServletContext());
         }
 
-        request.setAttribute("MAPPER", resultsManager.getMapper());
+        resultsManager.getMapper().getInverseSearch().resetTimestamp();
 
+        request.setAttribute("MAPPER", resultsManager.getMapper());
         request.setAttribute("DiagnosesGroupsHelper", new DiagnosesGroupHelper());
 
         RequestDispatcher dispatcher = this.getServletContext().getRequestDispatcher("/WEB-INF/views/results.jsp");
