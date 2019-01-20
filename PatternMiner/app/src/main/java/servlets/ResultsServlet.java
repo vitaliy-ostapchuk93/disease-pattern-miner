@@ -23,11 +23,14 @@ public class ResultsServlet extends HttpServlet {
 
         if (!resultsManager.getMapper().isInitialized()) {
             DataManager dataManager = (DataManager) this.getServletContext().getAttribute("DataManager");
+            AlgorithmManager algManager = (AlgorithmManager) this.getServletContext().getAttribute("AlgorithmManager");
+
 
             Set<DataFile> set = dataManager.getResultFileSet();
             resultsManager.fillResultMapper(set);
 
             resultsManager.getMapper().getInverseSearch().setContext(this.getServletContext());
+            resultsManager.getMapper().getInverseSearch().setAlgManager(algManager);
             resultsManager.getMapper().getInverseSearch().start();
         }
 
