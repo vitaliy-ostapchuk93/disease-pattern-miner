@@ -33,6 +33,16 @@
                     </c:forEach>
                 </div>
             </a>
+
+            <c:if test="${requestScope.MAPPER.tTestGenderDifference(seq.key) > 0 and requestScope.MAPPER.tTestGenderDifference(seq.key) <= 0.05}">
+                <span class="button is-pulled-right" style="border-right: 5px; border-left: 5px;"
+                      data-tooltip="t-Test is indicating difference in gender-groups."><i
+                        class="fas fa-user-circle"></i></span>
+            </c:if>
+            <c:if test="${requestScope.MAPPER.inverseSearchFinished(seq.key)}">
+                <span class="button is-pulled-right" style="border-right: 5px; border-left: 5px;"
+                      data-tooltip="Inverse-Search completed."><i class="fas fa-search"></i></span>
+            </c:if>
         </td>
 
 

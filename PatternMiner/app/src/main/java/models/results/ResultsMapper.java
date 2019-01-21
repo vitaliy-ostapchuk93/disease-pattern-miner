@@ -450,6 +450,15 @@ public class ResultsMapper {
         return column;
     }
 
+    public boolean inverseSearchFinished(String seqKey) {
+        for (ResultsEntry entry : resultsTable.row(seqKey).values()) {
+            if (!entry.isInverseSearch()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public double tTestGenderDifference(String seqKey) {
         SortedMap<GenderAgeGroup, ResultsEntry> row = resultsTable.row(seqKey);
 

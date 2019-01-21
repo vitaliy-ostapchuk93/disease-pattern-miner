@@ -12,9 +12,12 @@ public class ResultsEntry implements Comparable<ResultsEntry>, Serializable {
     private Integer supportValue;
     private ResultsDataFile fileOfResult;
 
+    private boolean inverseSearch;
+
     public ResultsEntry(int supportValue, ResultsDataFile file) {
         this.supportValue = supportValue;
         this.fileOfResult = file;
+        this.inverseSearch = false;
     }
 
     public int getSequenceCountOfInputFile() {
@@ -76,4 +79,11 @@ public class ResultsEntry implements Comparable<ResultsEntry>, Serializable {
         return Float.compare(entry1.getRelSupportValue(), entry2.getRelSupportValue());
     }
 
+    public boolean isInverseSearch() {
+        return inverseSearch;
+    }
+
+    public void setInverseSearch(boolean inverseSearch) {
+        this.inverseSearch = inverseSearch;
+    }
 }

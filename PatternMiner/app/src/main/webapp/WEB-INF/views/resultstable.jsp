@@ -28,7 +28,7 @@
             <thead>
             <tr>
                 <th><a class="button" style="border:none;">#</a></th>
-                <th><a class="button" style="border:none; justify-content: left">Pattern</a></th>
+                <th><a class="button" style="border:none; justify-content: left">Sequential Pattern</a></th>
                 <c:forEach var="group" items="${groups}">
                     <th><a class="button" style="border:none;">${group}</a></th>
                 </c:forEach>
