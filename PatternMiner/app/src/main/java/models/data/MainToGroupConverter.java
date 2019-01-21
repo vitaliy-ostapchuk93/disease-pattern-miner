@@ -144,7 +144,7 @@ public class MainToGroupConverter {
      * @param input The group file which is splitted.
      * @param tmp   A tmp directory where the new splitted files will be stored.
      */
-    private void splitGroupIntoPatients(File input, File tmp) {
+    public void splitGroupIntoPatients(File input, File tmp) {
         LOGGER.info("Read throug " + input.getName() + " and try split it.");
         LineIterator it = null;
         try {

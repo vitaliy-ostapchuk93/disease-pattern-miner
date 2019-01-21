@@ -344,8 +344,7 @@ public class PatternScanner {
         File dir = new File(servletContext.getRealPath(getScanDir()));
         dir.mkdirs();
 
-        Map<ICDLink, Long> fullLinks = new HashMap<>();
-        Map<ICDCode, Long> fullCommonCodes = new HashMap<>();
+
 
         String commonCodesFilePath = getCommonCodesFilePath(servletContext, entry.getGroupFileOfResult());
         String icdLinksFilePath = getFullIcdLinksFilePath(servletContext, entry.getGroupFileOfResult());
@@ -355,53 +354,61 @@ public class PatternScanner {
             boolean checkCommonCodes = checkIfFileCreated(commonCodesFilePath);
             boolean checkIcdLinks = checkIfFileCreated(icdLinksFilePath);
 
+            Map<ICDLink, Long> fullLinks = new HashMap<>();
+            Map<ICDCode, Long> fullCommonCodes = new HashMap<>();
+
             if (!checkCommonCodes || !checkIcdLinks) {
-                Path groupFile = Paths.get(entry.getGroupFileOfResult().getPath());
-                OpenOption[] options = new OpenOption[]{StandardOpenOption.READ};
-                Pattern comma = Pattern.compile(COMMA);
+                for (String fullPath : entry.getGroupFileOfResult().getChunks()) {
+                    try {
+                        Path groupFile = Paths.get(fullPath);
 
-                try {
-                    InputStream in = Files.newInputStream(groupFile, options);
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                        OpenOption[] options = new OpenOption[]{StandardOpenOption.READ};
+                        Pattern comma = Pattern.compile(COMMA);
 
-                    reader.lines()
-                            .map(line -> {
-                                String[] arr = comma.split(line);
-                                if (arr.length >= 2) {
-                                    ICDSequence sequence = new ICDSequence(arr[0]);
-                                    ICDEntry icdEntry = new ICDEntry(arr[1], Arrays.copyOfRange(arr, 2, arr.length));
-                                    sequence.addDiagnoses(icdEntry);
-                                    return sequence;
-                                }
-                                return null;
-                            })
-                            .collect(
-                                    groupingAdjacent(
-                                            ICDSequence::canCombine,                // test to determine if two adjacent elements go together
-                                            reducing(ICDSequence::combine),         // collector to use for combining the adjacent elements
-                                            mapping(Optional::get, toList())        // collector to group up combined elements
-                                    )
-                            ).stream()
-                            .filter(sequence -> sequence.getFilteredDiagnosesCount() > 2)
-                            .filter(sequence -> pattern.matcher(sequence.getFormatedSeqSPMF()).find())
-                            .forEach(sequence -> {
-                                //common codes
-                                if (!checkCommonCodes) {
-                                    sequence.getAllIcdCodes().stream()
-                                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                                            .forEach((k, v) -> fullCommonCodes.merge(k, v, (v1, v2) -> v1 + v2));
-                                }
 
-                                // icdLinks
-                                if (!checkIcdLinks) {
-                                    sequence.getIcdLinks().stream()
-                                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                                            .forEach((k, v) -> fullLinks.merge(k, v, (v1, v2) -> v1 + v2));
-                                }
-                            });
+                        InputStream in = Files.newInputStream(groupFile, options);
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
-                } catch (IOException e) {
-                    LOGGER.warning(e.getMessage());
+                        reader.lines()
+                                .map(line -> {
+                                    String[] arr = comma.split(line);
+                                    if (arr.length >= 2) {
+                                        ICDSequence sequence = new ICDSequence(arr[0]);
+                                        ICDEntry icdEntry = new ICDEntry(arr[1], Arrays.copyOfRange(arr, 2, arr.length));
+                                        sequence.addDiagnoses(icdEntry);
+                                        return sequence;
+                                    }
+                                    return null;
+                                })
+                                .collect(
+                                        groupingAdjacent(
+                                                ICDSequence::canCombine,                // test to determine if two adjacent elements go together
+                                                reducing(ICDSequence::combine),         // collector to use for combining the adjacent elements
+                                                mapping(Optional::get, toList())        // collector to group up combined elements
+                                        )
+                                ).stream()
+                                .filter(sequence -> sequence.getFilteredDiagnosesCount() > 2)
+                                .filter(sequence -> pattern.matcher(sequence.getFormatedSeqSPMF()).find())
+                                .forEach(sequence -> {
+                                    //common codes
+                                    if (!checkCommonCodes) {
+                                        sequence.getAllIcdCodes().stream()
+                                                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                                .forEach((k, v) -> fullCommonCodes.merge(k, v, (v1, v2) -> v1 + v2));
+                                    }
+
+                                    // icdLinks
+                                    if (!checkIcdLinks) {
+                                        sequence.getIcdLinks().stream()
+                                                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                                .forEach((k, v) -> fullLinks.merge(k, v, (v1, v2) -> v1 + v2));
+                                    }
+                                });
+
+                    } catch (IOException e) {
+                        LOGGER.warning(e.getMessage());
+                    }
+
                 }
 
                 if (!checkCommonCodes) {
