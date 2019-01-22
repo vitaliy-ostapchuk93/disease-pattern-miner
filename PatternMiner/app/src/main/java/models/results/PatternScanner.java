@@ -5,7 +5,6 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import models.data.*;
 
-import javax.servlet.ServletContext;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -31,7 +30,6 @@ public class PatternScanner {
 
     public PatternScanner(String seqKey) {
         this.seqKey = seqKey;
-        createRegex();
         LOGGER.setLevel(Level.INFO);
     }
 
@@ -81,7 +79,6 @@ public class PatternScanner {
     }
 
     private JsonArray buildLinksJSON(Map<ICDLink, Long> linksMap) {
-
         Map<ICDLink, Long> filteredLinkMap = linksMap.entrySet().stream()
                 .filter(icdLinkEntry -> icdLinkEntry.getValue() >= 10)
                 .sorted(comparingByValue(Comparator.reverseOrder()))
@@ -92,8 +89,8 @@ public class PatternScanner {
     }
 
 
-    public JsonArray getCommonCodesJSON(ServletContext servletContext, GroupDataFile groupFileOfResult) {
-        return (JsonArray) loadJson(getCommonCodesFilePath(servletContext, groupFileOfResult));
+    public JsonArray getCommonCodesJSON(ResultsEntry resultsEntry) {
+        return (JsonArray) loadJson(getCommonCodesFilePath(resultsEntry));
     }
 
     private JsonArray createLinks(Map<ICDLink, Long> linksMap) {
@@ -112,23 +109,23 @@ public class PatternScanner {
         return links;
     }
 
-    public JsonObject getCompleteIcdLinksJSON(SortedMap<GenderAgeGroup, ResultsEntry> pattern, ServletContext servletContext) {
+    public JsonObject getCompleteIcdLinksJSON(SortedMap<GenderAgeGroup, ResultsEntry> pattern) {
         JsonObject obj = new JsonObject();
 
         for (Map.Entry<GenderAgeGroup, ResultsEntry> entry : pattern.entrySet()) {
-            JsonArray fullIcdLinksGroup = getIcdLinksJSON(servletContext, entry.getValue().getGroupFileOfResult());
+            JsonArray fullIcdLinksGroup = getIcdLinksJSON(entry.getValue());
             obj.add(entry.getKey().toString(), fullIcdLinksGroup);
         }
 
         return obj;
     }
 
-    private JsonArray getIcdLinksJSON(ServletContext servletContext, GroupDataFile groupFileOfResult) {
-        return (JsonArray) loadJson(getFullIcdLinksFilePath(servletContext, groupFileOfResult));
+    private JsonArray getIcdLinksJSON(ResultsEntry resultsEntry) {
+        return (JsonArray) loadJson(getFullIcdLinksFilePath(resultsEntry));
     }
 
-    public void createInverseSearchFiles(ServletContext servletContext, Table.Cell<String, GenderAgeGroup, ResultsEntry> cell) {
-        createInverseSearchFiles(servletContext, cell.getValue());
+    public void createInverseSearchFiles(Table.Cell<String, GenderAgeGroup, ResultsEntry> cell) {
+        createInverseSearchFiles(cell.getValue());
     }
 
     public static <T, AI, I, AO, R> Collector<T, ?, R> groupingAdjacent(
@@ -262,19 +259,19 @@ public class PatternScanner {
         return fullCommonCodes;
     }
 
-    private String getFullIcdLinksFilePath(ServletContext servletContext, GroupDataFile file) {
-        String scanName = file.getName().replace(".csv", "_fl.json").replace("_sorted", "");
-        return servletContext.getRealPath(getScanDir() + File.separator + scanName);
+    private String getFullIcdLinksFilePath(ResultsEntry entry) {
+        String scanName = entry.getGroupFileOfResult().getName().replace(".csv", "_fl.json").replace("_sorted", "");
+        return getScanDir(entry.getFileOfResult()) + File.separator + scanName;
     }
 
-    private String getCommonCodesFilePath(ServletContext servletContext, GroupDataFile file) {
-        String scanName = file.getName().replace(".csv", "_cc.json").replace("_sorted", "");
-        return servletContext.getRealPath(getScanDir() + File.separator + scanName);
+    private String getCommonCodesFilePath(ResultsEntry entry) {
+        String scanName = entry.getGroupFileOfResult().getName().replace(".csv", "_cc.json").replace("_sorted", "");
+        return getScanDir(entry.getFileOfResult()) + File.separator + scanName;
     }
 
 
-    private String getScanDir() {
-        return ResultsDataFile.DIR_PATH + File.separator + "scans" + File.separator + "scan_ " + seqKey;
+    private String getScanDir(ResultsDataFile file) {
+        return file.getParent() + File.separator + "scans" + File.separator + "scan_ " + seqKey;
     }
 
     private boolean checkIfFileCreated(String path) {
@@ -340,14 +337,22 @@ public class PatternScanner {
         return jsonElement;
     }
 
-    public void createInverseSearchFiles(ServletContext servletContext, ResultsEntry entry) {
-        File dir = new File(servletContext.getRealPath(getScanDir()));
+    public boolean checkInverseSearchFiles(ResultsEntry entry) {
+        if (!checkIfFileCreated(getScanDir(entry.getFileOfResult()))) {
+            return false;
+        }
+        return (checkIfFileCreated(getCommonCodesFilePath(entry)) && checkIfFileCreated(getFullIcdLinksFilePath(entry)));
+    }
+
+
+    public void createInverseSearchFiles(ResultsEntry entry) {
+        createRegex();
+
+        File dir = new File(getScanDir(entry.getFileOfResult()));
         dir.mkdirs();
 
-
-
-        String commonCodesFilePath = getCommonCodesFilePath(servletContext, entry.getGroupFileOfResult());
-        String icdLinksFilePath = getFullIcdLinksFilePath(servletContext, entry.getGroupFileOfResult());
+        String commonCodesFilePath = getCommonCodesFilePath(entry);
+        String icdLinksFilePath = getFullIcdLinksFilePath(entry);
 
 
         if (!entry.isInverseSearch()) {
@@ -369,7 +374,7 @@ public class PatternScanner {
                         InputStream in = Files.newInputStream(groupFile, options);
                         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
-                        reader.lines()
+                        List<ICDSequence> icdSequences = reader.lines()
                                 .map(line -> {
                                     String[] arr = comma.split(line);
                                     if (arr.length >= 2) {
@@ -386,20 +391,25 @@ public class PatternScanner {
                                                 reducing(ICDSequence::combine),         // collector to use for combining the adjacent elements
                                                 mapping(Optional::get, toList())        // collector to group up combined elements
                                         )
-                                ).stream()
+                                );
+
+                        List<ICDSequence> filteredSequences = icdSequences.stream()
                                 .filter(sequence -> sequence.getFilteredDiagnosesCount() > 2)
                                 .filter(sequence -> pattern.matcher(sequence.getFormatedSeqSPMF()).find())
+                                .collect(toList());
+
+                        filteredSequences
                                 .forEach(sequence -> {
                                     //common codes
                                     if (!checkCommonCodes) {
-                                        sequence.getAllIcdCodes().stream()
+                                        sequence.getAllIcdCodes().parallelStream()
                                                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
                                                 .forEach((k, v) -> fullCommonCodes.merge(k, v, (v1, v2) -> v1 + v2));
                                     }
 
                                     // icdLinks
                                     if (!checkIcdLinks) {
-                                        sequence.getIcdLinks().stream()
+                                        sequence.getIcdLinks().parallelStream()
                                                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
                                                 .forEach((k, v) -> fullLinks.merge(k, v, (v1, v2) -> v1 + v2));
                                     }

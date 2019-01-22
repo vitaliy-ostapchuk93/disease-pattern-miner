@@ -8,7 +8,6 @@ import models.data.*;
 import net.minidev.json.JSONObject;
 import org.apache.commons.math3.stat.inference.TestUtils;
 
-import javax.servlet.ServletContext;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,16 +27,14 @@ public class ResultsMapper {
     private int highestPatternLength;
 
     private List<ResultsFilter> filterList;
-
-    private QueueLinkedMap<String, PatternScanner> patternScannerMap;
     private InverseSearchThread inverseSearch;
+
 
     public ResultsMapper() {
         LOGGER.setLevel(Level.INFO);
 
         this.resultsTable = TreeBasedTable.create();
         this.filterList = new ArrayList<>();
-        this.patternScannerMap = new QueueLinkedMap<>(5);
 
         this.inverseSearch = new InverseSearchThread(this);
     }
@@ -357,8 +354,12 @@ public class ResultsMapper {
         GenderAgeGroup group = new GenderAgeGroup(gender, ageGroup);
         ResultsEntry newEntry = new ResultsEntry(suppValue, file);
 
+        PatternScanner scanner = new PatternScanner(seqence);
+        newEntry.setInverseSearch(scanner.checkInverseSearchFiles(newEntry));
+
         if (resultsTable.contains(seqence, group)) {
             ResultsEntry entry = resultsTable.get(seqence, group);
+
             if (entry.getSequenceCountOfInputFile() < newEntry.getSequenceCountOfInputFile()) {
                 resultsTable.put(seqence, group, newEntry);
             }
@@ -498,36 +499,20 @@ public class ResultsMapper {
         this.highestPatternLength = highestPatternLength;
     }
 
-    public Map<String, PatternScanner> getPatternScannerMap() {
-        return patternScannerMap;
-    }
-
-    public PatternScanner getPatternScanner(String patternKey) {
-        if (!patternScannerMap.containsKey(patternKey)) {
-            patternScannerMap.put(patternKey, new PatternScanner(patternKey));
-
-            if (patternScannerMap.size() > patternScannerMap.getMaxSize()) {
-                patternScannerMap.removeHead();
-            }
-
-        }
-        return patternScannerMap.get(patternKey);
-    }
-
-
-    public JsonObject getIcdLinksData(String patternKey, ServletContext servletContext) {
-        PatternScanner patternScanner = getPatternScanner(patternKey);
+    public JsonObject getIcdLinksData(String patternKey) {
+        PatternScanner patternScanner = new PatternScanner(patternKey);
 
         for (ResultsEntry entry : resultsTable.row(patternKey).values()) {
-            createInverseSearchFiles(servletContext, patternKey, entry);
+            createInverseSearchFiles(patternKey, entry);
         }
 
-        return patternScanner.getCompleteIcdLinksJSON(resultsTable.row(patternKey), servletContext);
+        return patternScanner.getCompleteIcdLinksJSON(resultsTable.row(patternKey));
     }
 
-    public void createInverseSearchFiles(ServletContext servletContext, String patternKey, ResultsEntry entry) {
+    public void createInverseSearchFiles(String patternKey, ResultsEntry entry) {
         this.inverseSearch.resetTimestamp();
-        getPatternScanner(patternKey).createInverseSearchFiles(servletContext, entry);
+        PatternScanner scanner = new PatternScanner(patternKey);
+        scanner.createInverseSearchFiles(entry);
     }
 
     public InverseSearchThread getInverseSearch() {

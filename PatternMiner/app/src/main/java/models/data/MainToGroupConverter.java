@@ -86,6 +86,7 @@ public class MainToGroupConverter {
             File sorted = sortGivenGroupFile(new File(filePath));
 
             GroupDataFile dataFile = new GroupDataFile(sorted.getPath());
+            dataFile.getChunks();
             dataFile.setSelected(true);
 
             sortedFiles.add(dataFile);

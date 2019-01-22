@@ -29,7 +29,6 @@ public class ResultsServlet extends HttpServlet {
             Set<DataFile> set = dataManager.getResultFileSet();
             resultsManager.fillResultMapper(set);
 
-            resultsManager.getMapper().getInverseSearch().setContext(this.getServletContext());
             resultsManager.getMapper().getInverseSearch().setAlgManager(algManager);
             resultsManager.getMapper().getInverseSearch().start();
         }

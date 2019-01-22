@@ -116,7 +116,7 @@ public class GroupDataFile extends DataFile {
                 if (!p[0].equals(sequence.getId())) {
                     sequence = new ICDSequence(p[0]);
 
-                    if (chunkLines.size() >= 500000) {
+                    if (chunkLines.size() >= 1000000) {
                         chunkPaths.add(saveChunkAsFile(chunkLines, counter));
                         chunkLines = new ArrayList<>();
                         counter++;

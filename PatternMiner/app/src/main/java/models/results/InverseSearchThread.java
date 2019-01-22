@@ -8,7 +8,6 @@ import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import servlets.AlgorithmManager;
 
-import javax.servlet.ServletContext;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -20,7 +19,6 @@ public class InverseSearchThread extends Thread {
 
     private DateTime timestamp;
     private ResultsMapper resultsMapper;
-    private ServletContext servletContext;
     private AlgorithmManager algManager;
 
     public InverseSearchThread(ResultsMapper resultsMapper) {
@@ -30,9 +28,6 @@ public class InverseSearchThread extends Thread {
 
     @Override
     public void run() {
-        if (servletContext == null) {
-            return;
-        }
         for (Table.Cell<String, GenderAgeGroup, ResultsEntry> cell : resultsMapper.getFilteredResultsTable().cellSet()) {
             try {
                 while (Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() < PAUSE_DURATION || checkForRunningAlg()) {                             //wait 3 min with no user action
@@ -40,8 +35,8 @@ public class InverseSearchThread extends Thread {
                 }
                 LOGGER.info("Creating Inverse-Search-Files for cell [" + cell.getRowKey() + " , " + cell.getColumnKey() + "]");
 
-                PatternScanner patternScanner = resultsMapper.getPatternScanner(cell.getRowKey());
-                patternScanner.createInverseSearchFiles(servletContext, cell);
+                PatternScanner patternScanner = new PatternScanner(cell.getRowKey());
+                patternScanner.createInverseSearchFiles(cell);
 
             } catch (InterruptedException e) {
                 LOGGER.warning(e.getMessage());
@@ -67,10 +62,6 @@ public class InverseSearchThread extends Thread {
 
     public void resetTimestamp() {
         this.timestamp = DateTime.now();
-    }
-
-    public void setContext(ServletContext servletContext) {
-        this.servletContext = servletContext;
     }
 
     public void setAlgManager(AlgorithmManager algManager) {
