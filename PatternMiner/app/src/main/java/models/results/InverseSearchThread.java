@@ -8,8 +8,10 @@ import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import servlets.AlgorithmManager;
 
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class InverseSearchThread extends Thread {
     protected static Logger LOGGER = Logger.getLogger(InverseSearchThread.class.getName());
@@ -21,28 +23,44 @@ public class InverseSearchThread extends Thread {
     private ResultsMapper resultsMapper;
     private AlgorithmManager algManager;
 
+    private boolean finished;
+
     public InverseSearchThread(ResultsMapper resultsMapper) {
         this.resultsMapper = resultsMapper;
+        this.finished = false;
         resetTimestamp();
     }
 
     @Override
     public void run() {
-        for (Table.Cell<String, GenderAgeGroup, ResultsEntry> cell : resultsMapper.getFilteredResultsTable().cellSet()) {
-            try {
-                while (Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() < PAUSE_DURATION || checkForRunningAlg()) {                             //wait 3 min with no user action
-                    waitForResume(PAUSE_DURATION - Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() + DURATION);
-                }
-                LOGGER.info("Creating Inverse-Search-Files for cell [" + cell.getRowKey() + " , " + cell.getColumnKey() + "]");
+        while (!finished) {
+            Set<Table.Cell<String, GenderAgeGroup, ResultsEntry>> cellSet = resultsMapper.getFilteredResultsTable().cellSet().parallelStream()
+                    .filter(cell -> !cell.getValue().isInverseSearch())
+                    .sorted(resultsMapper.getTableCellComporator().reverse())
+                    .limit(50)
+                    .collect(Collectors.toSet());
+            if (cellSet.isEmpty()) {
+                finished = true;
+            } else {
+                cellSet.forEach(cell -> {
+                    try {
+                        while (Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() < PAUSE_DURATION || checkForRunningAlg()) {                             //wait 3 min with no user action
+                            waitForResume(PAUSE_DURATION - Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() + DURATION);
+                        }
+                        LOGGER.info("Creating Inverse-Search-Files for cell [" + cell.getRowKey() + " , " + cell.getColumnKey() + "]");
 
-                PatternScanner patternScanner = new PatternScanner(cell.getRowKey());
-                patternScanner.createInverseSearchFiles(cell);
+                        PatternScanner patternScanner = new PatternScanner(cell.getRowKey());
+                        patternScanner.createInverseSearchFiles(cell.getValue());
 
-            } catch (InterruptedException e) {
-                LOGGER.warning(e.getMessage());
-                return;
+                    } catch (InterruptedException e) {
+                        LOGGER.warning(e.getMessage());
+                        return;
+                    }
+                });
             }
+
         }
+
         LOGGER.info("Exiting InverseSearchThread.");
     }
 
@@ -67,4 +85,13 @@ public class InverseSearchThread extends Thread {
     public void setAlgManager(AlgorithmManager algManager) {
         this.algManager = algManager;
     }
+
+    public boolean isFinished() {
+        return finished;
+    }
+
+    public void setFinished(boolean finished) {
+        this.finished = finished;
+    }
+
 }

@@ -226,6 +226,7 @@ public class DataManager implements ServletContextListener, DataFileListener {
         if (file instanceof MainDataFile && file.getName().contains(".csv")) {
             mainFileSet.add(file);
             ((MainDataFile) file).splitIntoSortedGroups();
+
         }
     }
 }
