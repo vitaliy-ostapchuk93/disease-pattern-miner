@@ -35,7 +35,7 @@ public class InverseSearchThread extends Thread {
         while (!finished) {
             Set<String> rowKeys = resultsMapper.getFilteredResultsTable().cellSet().parallelStream()
                     .filter(cell -> !cell.getValue().isInverseSearch())
-                    .sorted(resultsMapper.getTableCellComporator().reverse())
+                    .sorted(resultsMapper.getTableCellComporator())
                     .limit(10)
                     .map(Table.Cell::getRowKey)
                     .collect(Collectors.toSet());
