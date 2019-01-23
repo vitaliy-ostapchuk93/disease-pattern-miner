@@ -23,10 +23,12 @@ public class InverseSearchThread extends Thread {
     private AlgorithmManager algManager;
 
     private boolean finished;
+    private boolean used;
 
     public InverseSearchThread(ResultsMapper resultsMapper) {
         this.resultsMapper = resultsMapper;
         this.finished = false;
+        this.used = false;
         resetTimestamp();
     }
 
@@ -46,7 +48,7 @@ public class InverseSearchThread extends Thread {
                     PatternScanner patternScanner = new PatternScanner(patternKey);
                     resultsMapper.getResultsTable().row(patternKey).forEach((groupKey, resultsEntry) -> {
                         try {
-                            while (Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() < PAUSE_DURATION || checkForRunningAlg()) {
+                            while (Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() < PAUSE_DURATION || checkForRunningAlg() || isUsed()) {
                                 waitForResume(PAUSE_DURATION - Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() + DURATION);
                             }
                             LOGGER.info("Creating Inverse-Search-Files for cell [" + patternKey + " , " + groupKey + "]");
@@ -94,4 +96,11 @@ public class InverseSearchThread extends Thread {
         this.finished = finished;
     }
 
+    public boolean isUsed() {
+        return used;
+    }
+
+    public void setUsed(boolean used) {
+        this.used = used;
+    }
 }

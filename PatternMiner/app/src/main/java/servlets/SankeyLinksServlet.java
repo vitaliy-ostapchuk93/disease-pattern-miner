@@ -26,7 +26,9 @@ public class SankeyLinksServlet extends HttpServlet {
         if (request.getParameter("patternKey") != null) {
             String patternKey = request.getParameter("patternKey");
 
+            resultsManager.getMapper().getInverseSearch().setUsed(true);
             out.print(resultsManager.getMapper().getIcdLinksData(patternKey));
+            resultsManager.getMapper().getInverseSearch().setUsed(false);
         }
     }
 }

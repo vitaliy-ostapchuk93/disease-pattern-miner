@@ -36,10 +36,13 @@ public class ResultsCellServlet extends HttpServlet {
 
             JsonObject obj = new JsonObject();
             PatternScanner patternScanner = new PatternScanner(seqKey);
+            resultsManager.getMapper().getInverseSearch().setUsed(true);
 
             obj.add("stats", entry.getTooltipStats());
             obj.addProperty("tTest", resultsManager.getMapper().tTestGenderDifference(seqKey));
             obj.add("commonCodes", patternScanner.getCommonCodesJSON(entry));
+
+            resultsManager.getMapper().getInverseSearch().setUsed(false);
 
             out.print(obj);
         }
