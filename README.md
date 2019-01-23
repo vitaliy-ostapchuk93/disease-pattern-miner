@@ -1,4 +1,4 @@
-![polydev](/PatternMiner/app/src/main/webapp/resources/static/img/logo.png "Logo - Disease Pattern Miner")
+![polydev](/PatternMiner/app/src/main/webapp/resources/static/img/logo.png "Logo - Disease Pattern Miner" | )
 
 # Disease Pattern Miner
 
@@ -32,8 +32,7 @@
 ******
 
 ## Authors
-
-* [Vitaliy Ostapchuk] (mailto:vostapch@stud.hs-heilbronn.de)
+* [Vitaliy Ostapchuk](mailto:vostapch@stud.hs-heilbronn.de)
 ******
 
 ## Publication
@@ -42,3 +41,5 @@
 ******
 
 ## Licence
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+      
