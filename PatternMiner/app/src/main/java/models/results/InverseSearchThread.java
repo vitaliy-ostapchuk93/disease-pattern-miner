@@ -3,7 +3,6 @@ package models.results;
 import com.google.common.collect.Table;
 import models.algorithm.AlgorithmRunnable;
 import models.algorithm.AlgorithmStatus;
-import models.data.GenderAgeGroup;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import servlets.AlgorithmManager;
@@ -34,28 +33,29 @@ public class InverseSearchThread extends Thread {
     @Override
     public void run() {
         while (!finished) {
-            Set<Table.Cell<String, GenderAgeGroup, ResultsEntry>> cellSet = resultsMapper.getFilteredResultsTable().cellSet().parallelStream()
+            Set<String> rowKeys = resultsMapper.getFilteredResultsTable().cellSet().parallelStream()
                     .filter(cell -> !cell.getValue().isInverseSearch())
                     .sorted(resultsMapper.getTableCellComporator().reverse())
-                    .limit(50)
+                    .limit(10)
+                    .map(Table.Cell::getRowKey)
                     .collect(Collectors.toSet());
-            if (cellSet.isEmpty()) {
+            if (rowKeys.isEmpty()) {
                 finished = true;
             } else {
-                cellSet.forEach(cell -> {
-                    try {
-                        while (Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() < PAUSE_DURATION || checkForRunningAlg()) {                             //wait 3 min with no user action
-                            waitForResume(PAUSE_DURATION - Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() + DURATION);
+                rowKeys.forEach(patternKey -> {
+                    PatternScanner patternScanner = new PatternScanner(patternKey);
+                    resultsMapper.getResultsTable().row(patternKey).forEach((groupKey, resultsEntry) -> {
+                        try {
+                            while (Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() < PAUSE_DURATION || checkForRunningAlg()) {
+                                waitForResume(PAUSE_DURATION - Seconds.secondsBetween(timestamp, DateTime.now()).getSeconds() + DURATION);
+                            }
+                            LOGGER.info("Creating Inverse-Search-Files for cell [" + patternKey + " , " + groupKey + "]");
+                            patternScanner.createInverseSearchFiles(resultsEntry);
+                        } catch (InterruptedException e) {
+                            LOGGER.warning(e.getMessage());
+                            return;
                         }
-                        LOGGER.info("Creating Inverse-Search-Files for cell [" + cell.getRowKey() + " , " + cell.getColumnKey() + "]");
-
-                        PatternScanner patternScanner = new PatternScanner(cell.getRowKey());
-                        patternScanner.createInverseSearchFiles(cell.getValue());
-
-                    } catch (InterruptedException e) {
-                        LOGGER.warning(e.getMessage());
-                        return;
-                    }
+                    });
                 });
             }
 
