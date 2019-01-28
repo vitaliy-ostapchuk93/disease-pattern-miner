@@ -6,10 +6,10 @@ import com.google.gson.stream.JsonReader;
 import models.data.*;
 
 import java.io.*;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.BiPredicate;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -17,7 +17,9 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static java.util.Map.Entry.comparingByValue;
-import static java.util.stream.Collectors.*;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
 
 public class PatternScanner {
 
@@ -344,7 +346,7 @@ public class PatternScanner {
         return (checkIfFileCreated(getCommonCodesFilePath(entry)) && checkIfFileCreated(getFullIcdLinksFilePath(entry)));
     }
 
-
+/*
     public void createInverseSearchFiles(ResultsEntry entry) {
         createRegex();
 
@@ -432,5 +434,67 @@ public class PatternScanner {
 
             entry.setInverseSearch(true);
         }
+    }
+    */
+
+    public void createInverseSearchFiles(ResultsEntry entry) {
+        createRegex();
+
+        File dir = new File(getScanDir(entry.getFileOfResult()));
+        dir.mkdirs();
+
+        String commonCodesFilePath = getCommonCodesFilePath(entry);
+        String icdLinksFilePath = getFullIcdLinksFilePath(entry);
+
+
+        if (!entry.isInverseSearch()) {
+            boolean checkCommonCodes = checkIfFileCreated(commonCodesFilePath);
+            boolean checkIcdLinks = checkIfFileCreated(icdLinksFilePath);
+
+
+            if (!checkCommonCodes || !checkIcdLinks) {
+                try {
+                    Set<ICDSequence> icdSequences = Files.lines(Paths.get(entry.getGroupFileOfResult().getPath()))
+                            .map(line -> line.split(COMMA))
+                            .filter(transaction -> transaction.length > 2)
+                            .map(ICDTransaction::new)
+                            .collect(groupingBy(ICDTransaction::getId))
+                            .entrySet().stream()
+                            .map(sequence -> new ICDSequence(sequence.getKey(), sequence.getValue().stream()
+                                    .map(ICDTransaction::getEntry).sorted().collect(Collectors.toList())
+                            ))
+                            .filter(sequence -> sequence.getFilteredDiagnosesCount() > 2)
+                            .filter(sequence -> pattern.matcher(sequence.getFormatedSeqSPMF()).find())
+                            .collect(Collectors.toSet());
+
+
+                    if (!checkCommonCodes) {
+                        Map<ICDCode, Long> commonCodes = icdSequences.stream()
+                                .map(ICDSequence::getAllIcdCodes)
+                                .flatMap(Collection::stream)
+                                .collect(groupingBy(identity(), counting()));
+
+                        saveJson(buildCommonCodesJSON(commonCodes), commonCodesFilePath);
+                    }
+
+                    if (!checkIfFileCreated(icdLinksFilePath)) {
+                        Map<ICDLink, Long> icdLinks = icdSequences.stream()
+                                .map(ICDSequence::getIcdLinks)
+                                .flatMap(Collection::stream)
+                                .collect(groupingBy(identity(), counting()));
+                        saveJson(buildLinksJSON(icdLinks), icdLinksFilePath);
+                    }
+
+                } catch (IOException e) {
+                    LOGGER.warning(e.getMessage());
+                }
+
+            }
+
+
+        }
+
+        entry.setInverseSearch(true);
+
     }
 }

@@ -22,6 +22,11 @@ public class ICDSequence implements Serializable {
         this.diagnoses = new ArrayList<>();
     }
 
+    public ICDSequence(String id, List<ICDEntry> diagnoses) {
+        this.id = id;
+        this.diagnoses = diagnoses;
+    }
+
     public Gender getGender() {
         return gender;
     }
@@ -391,5 +396,4 @@ public class ICDSequence implements Serializable {
         other.diagnoses.forEach(combinedSequence::addDiagnoses);
         return combinedSequence;
     }
-
 }
