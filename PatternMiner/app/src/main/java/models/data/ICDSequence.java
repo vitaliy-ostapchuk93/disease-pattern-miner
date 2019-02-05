@@ -6,10 +6,12 @@ import org.joda.time.Days;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ICDSequence implements Serializable {
 
     private final static int DAYS_IN_BETWEEN = 14;
+    private static final String COMMA = ",";
 
     private String id;
     private Gender gender;
@@ -25,6 +27,16 @@ public class ICDSequence implements Serializable {
     public ICDSequence(String id, List<ICDEntry> diagnoses) {
         this.id = id;
         this.diagnoses = diagnoses;
+    }
+
+    public ICDSequence(List<String[]> transactions) {
+        String[] firstTransaction = transactions.get(0);
+        this.id = firstTransaction[0];
+
+        this.diagnoses = transactions.stream()
+                .map(transaction -> new ICDEntry(transaction[1], Arrays.copyOfRange(transaction, 2, transaction.length)))
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     public Gender getGender() {
@@ -69,18 +81,14 @@ public class ICDSequence implements Serializable {
 
     public int getDiagnosesCount() {
         int i = 0;
-        for (ICDEntry entry : diagnoses) {
+        for (ICDEntry entry : getDiagnoses()) {
             i += entry.getIcdCodes().size();
         }
         return i;
     }
 
-    public int getFilteredDiagnosesCount() {
-        Set<DiagnosesGroup> filteredDiagnoses = new HashSet<>();
-        for (ICDEntry entry : diagnoses) {
-            filteredDiagnoses.addAll(entry.getFilteredDiagnoses());
-        }
-        return filteredDiagnoses.size();
+    public long getFilteredDiagnosesCount() {
+        return diagnoses.stream().mapToLong(entry -> entry.getFilteredCodes().size()).sum();
     }
 
     public String getId() {
@@ -149,8 +157,7 @@ public class ICDSequence implements Serializable {
         DateTime oldD = null;
 
         SortedSet<DiagnosesGroup> itemset = new TreeSet<>(Comparator.comparingInt(Enum::ordinal));
-
-        for (ICDEntry entry : diagnoses) {
+        for (ICDEntry entry : getDiagnoses()) {
             if (newD != null) {
                 oldD = newD;
             }
@@ -200,7 +207,7 @@ public class ICDSequence implements Serializable {
 
         List<String> codesItemset = new ArrayList<>();
 
-        for (ICDEntry entry : diagnoses) {
+        for (ICDEntry entry : getDiagnoses()) {
             if (newD != null) {
                 oldD = newD;
             }
@@ -252,7 +259,7 @@ public class ICDSequence implements Serializable {
 
         SortedSet<ICDCode> codesItemset = new TreeSet<>(Comparator.comparingInt(o -> o.getGroup().ordinal()));
 
-        for (ICDEntry entry : diagnoses) {
+        for (ICDEntry entry : getDiagnoses()) {
             if (newD != null) {
                 oldD = newD;
             }
@@ -276,13 +283,7 @@ public class ICDSequence implements Serializable {
     }
 
     public Collection<? extends ICDCode> getAllIcdCodes() {
-        Set<ICDCode> codes = new HashSet<>();
-
-        for (ICDEntry entry : diagnoses) {
-            codes.addAll(entry.getFilteredCodes());
-        }
-
-        return codes;
+        return diagnoses.stream().flatMap(entry -> entry.getFilteredCodes().stream()).collect(Collectors.toList());
     }
 
 
@@ -324,7 +325,7 @@ public class ICDSequence implements Serializable {
         */
 
         for (int current = 0; current < diagnoses.size(); current++) {
-            ICDEntry currentEntry = diagnoses.get(current);
+            ICDEntry currentEntry = getDiagnoses().get(current);
             Set<ICDCode> currentEntrySet = currentEntry.getFilteredCodes();
             Set<ICDCode> visited = new HashSet<>();
 
@@ -345,7 +346,7 @@ public class ICDSequence implements Serializable {
 
             //connect with future entries
             for (int future = current; future < diagnoses.size(); future++) {
-                ICDEntry futureEntry = diagnoses.get(future);
+                ICDEntry futureEntry = getDiagnoses().get(future);
 
                 if (Days.daysBetween(currentEntry.getDate(), futureEntry.getDate()).getDays() <= DAYS_IN_BETWEEN) {
                     Set<ICDCode> futureEntrySet = futureEntry.getFilteredCodes();
@@ -395,5 +396,24 @@ public class ICDSequence implements Serializable {
         this.diagnoses.forEach(combinedSequence::addDiagnoses);
         other.diagnoses.forEach(combinedSequence::addDiagnoses);
         return combinedSequence;
+    }
+
+    public String getFormatedSeqStreamed() {
+        StringBuilder line = new StringBuilder();
+        line.append(getId()).append(COMMA);
+
+        for (ICDEntry entry : getDiagnoses()) {
+            line.append(entry.getDate().toString("yyyyMMdd")).append(COMMA);
+            for (ICDCode code : entry.getIcdCodes()) {
+                line.append(code.getSmallCode()).append(COMMA);
+            }
+        }
+
+        return line.toString();
+    }
+
+    public List<ICDEntry> getDiagnoses() {
+        Collections.sort(diagnoses);
+        return diagnoses;
     }
 }

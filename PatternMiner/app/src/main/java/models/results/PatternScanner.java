@@ -4,9 +4,12 @@ import com.google.common.collect.Table;
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import models.data.*;
+import one.util.streamex.StreamEx;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeUtils;
+import org.joda.time.Duration;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.BiPredicate;
@@ -346,7 +349,7 @@ public class PatternScanner {
         return (checkIfFileCreated(getCommonCodesFilePath(entry)) && checkIfFileCreated(getFullIcdLinksFilePath(entry)));
     }
 
-/*
+    /*
     public void createInverseSearchFiles(ResultsEntry entry) {
         createRegex();
 
@@ -437,6 +440,9 @@ public class PatternScanner {
     }
     */
 
+
+    /*
+
     public void createInverseSearchFiles(ResultsEntry entry) {
         createRegex();
 
@@ -454,6 +460,9 @@ public class PatternScanner {
 
             if (!checkCommonCodes || !checkIcdLinks) {
                 try {
+
+                    DateTime timeStart = DateTime.now();
+
                     Set<ICDSequence> icdSequences = Files.lines(Paths.get(entry.getGroupFileOfResult().getPath()))
                             .map(line -> line.split(COMMA))
                             .filter(transaction -> transaction.length > 2)
@@ -467,6 +476,8 @@ public class PatternScanner {
                             .filter(sequence -> pattern.matcher(sequence.getFormatedSeqSPMF()).find())
                             .collect(Collectors.toSet());
 
+                    DateTime timeCollected = DateTime.now();
+
 
                     if (!checkCommonCodes) {
                         Map<ICDCode, Long> commonCodes = icdSequences.stream()
@@ -477,6 +488,9 @@ public class PatternScanner {
                         saveJson(buildCommonCodesJSON(commonCodes), commonCodesFilePath);
                     }
 
+                    DateTime timeCC = DateTime.now();
+
+
                     if (!checkIfFileCreated(icdLinksFilePath)) {
                         Map<ICDLink, Long> icdLinks = icdSequences.stream()
                                 .map(ICDSequence::getIcdLinks)
@@ -485,6 +499,86 @@ public class PatternScanner {
                         saveJson(buildLinksJSON(icdLinks), icdLinksFilePath);
                     }
 
+                    DateTime timeLinks = DateTime.now();
+
+                    System.out.println( "Collected in: " + DateTimeUtils.getDurationMillis(new Duration(timeStart, timeCollected)));
+
+                    System.out.println( "CC in: " + DateTimeUtils.getDurationMillis(new Duration(timeCollected, timeCC)));
+                    System.out.println( "Links in: " + DateTimeUtils.getDurationMillis(new Duration(timeCC, timeLinks)));
+
+
+                } catch (IOException e) {
+                    LOGGER.warning(e.getMessage());
+                }
+
+            }
+
+
+        }
+
+        entry.setInverseSearch(true);
+
+    }
+
+    */
+
+    public void createInverseSearchFiles(ResultsEntry entry) {
+        createRegex();
+
+        File dir = new File(getScanDir(entry.getFileOfResult()));
+        dir.mkdirs();
+
+        String commonCodesFilePath = getCommonCodesFilePath(entry);
+        String icdLinksFilePath = getFullIcdLinksFilePath(entry);
+
+
+        if (!entry.isInverseSearch()) {
+            boolean checkCommonCodes = checkIfFileCreated(commonCodesFilePath);
+            boolean checkIcdLinks = checkIfFileCreated(icdLinksFilePath);
+
+
+            if (!checkCommonCodes || !checkIcdLinks) {
+                try {
+
+                    DateTime timeStart = DateTime.now();
+
+                    Set<ICDSequence> icdSequences = StreamEx.ofLines(Paths.get(entry.getGroupFileOfResult().getPath()))
+                            .map(line -> line.split(COMMA))
+                            .filter(transaction -> transaction.length > 2)
+                            .filter(transaction -> transaction[1].length() == 8)
+                            .filter(transaction -> transaction[1].startsWith("20"))
+                            .groupRuns((transaction1, transaction2) -> transaction1[0].equals(transaction2[0]))
+                            .map(ICDSequence::new)
+                            .filter(sequence -> sequence.getFilteredDiagnosesCount() > 2)
+                            .filter(sequence -> pattern.matcher(sequence.getFormatedSeqSPMF()).find())
+                            .collect(Collectors.toSet());
+
+                    DateTime timeCollected = DateTime.now();
+
+                    if (!checkCommonCodes) {
+                        Map<ICDCode, Long> commonCodes = icdSequences.stream()
+                                .map(ICDSequence::getAllIcdCodes)
+                                .flatMap(Collection::stream)
+                                .collect(groupingBy(identity(), counting()));
+
+                        saveJson(buildCommonCodesJSON(commonCodes), commonCodesFilePath);
+                    }
+
+                    DateTime timeCC = DateTime.now();
+
+                    if (!checkIfFileCreated(icdLinksFilePath)) {
+                        Map<ICDLink, Long> icdLinks = icdSequences.stream()
+                                .map(ICDSequence::getIcdLinks)
+                                .flatMap(Collection::stream)
+                                .collect(groupingBy(identity(), counting()));
+                        saveJson(buildLinksJSON(icdLinks), icdLinksFilePath);
+                    }
+
+                    DateTime timeLinks = DateTime.now();
+
+                    LOGGER.info("Collected in: " + DateTimeUtils.getDurationMillis(new Duration(timeStart, timeCollected)) + " ms");
+                    LOGGER.info("CC in: " + DateTimeUtils.getDurationMillis(new Duration(timeCollected, timeCC)) + " ms");
+                    LOGGER.info("Links in: " + DateTimeUtils.getDurationMillis(new Duration(timeCC, timeLinks)) + " ms");
                 } catch (IOException e) {
                     LOGGER.warning(e.getMessage());
                 }

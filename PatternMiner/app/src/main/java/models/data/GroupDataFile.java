@@ -150,4 +150,40 @@ public class GroupDataFile extends DataFile {
 
         return chunkFile.getPath();
     }
+
+    public void createStreamedGroupFile() {
+        File streamed = new File(getPath().replace("_sorted", "_streamed"));
+        FileAppendUtils appendUtils = new FileAppendUtils();
+
+        LineIterator it = null;
+        try {
+            it = FileUtils.lineIterator(this, "UTF-8");
+
+            ICDSequence sequence = null;
+            while (it.hasNext()) {
+                String line = it.nextLine();
+                String[] p = line.split(COMMA);
+
+                //first sequence
+                if (sequence == null) {
+                    sequence = new ICDSequence(p[0]);
+                }
+
+                //different sequence id
+                if (!p[0].equals(sequence.getId())) {
+                    appendUtils.appendToFile(streamed, sequence.getFormatedSeqStreamed());
+                    sequence = new ICDSequence(p[0]);
+                }
+
+                //same sequence
+                if (p.length >= 2) {
+                    sequence.addDiagnoses(p[1], Arrays.copyOfRange(p, 2, p.length));
+                }
+            }
+            it.close();
+            appendUtils.closeAllWriters();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

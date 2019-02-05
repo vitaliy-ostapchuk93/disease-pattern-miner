@@ -5,10 +5,10 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 public class ICDEntry implements Serializable, Comparable<ICDEntry> {
@@ -18,12 +18,7 @@ public class ICDEntry implements Serializable, Comparable<ICDEntry> {
     public ICDEntry(String time, String[] codes) {
         DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyyMMdd");
         this.date = formatter.parseDateTime(time);
-
-        List<ICDCode> icdCodeList = new ArrayList<>();
-        for (String code : codes) {
-            icdCodeList.add(new ICDCode(code));
-        }
-        this.icdCodes = icdCodeList;
+        this.icdCodes = Arrays.stream(codes).map(ICDCode::new).collect(Collectors.toList());
     }
 
     public DateTime getDate() {
@@ -35,23 +30,11 @@ public class ICDEntry implements Serializable, Comparable<ICDEntry> {
     }
 
     public Set<DiagnosesGroup> getFilteredDiagnoses() {
-        Set<DiagnosesGroup> groups = new HashSet<>();
-        for (ICDCode code : icdCodes) {
-            if (code.checkFiltered()) {
-                groups.add(code.getGroup());
-            }
-        }
-        return groups;
+        return icdCodes.stream().filter(ICDCode::checkFiltered).map(ICDCode::getGroup).collect(Collectors.toSet());
     }
 
     public Set<ICDCode> getFilteredCodes() {
-        Set<ICDCode> codes = new HashSet<>();
-        for (ICDCode code : icdCodes) {
-            if (code.checkFiltered()) {
-                codes.add(code);
-            }
-        }
-        return codes;
+        return icdCodes.stream().filter(ICDCode::checkFiltered).collect(Collectors.toSet());
     }
 
     @Override
