@@ -726,6 +726,8 @@ function valueUpdate() {
             disableUserInterractions(2 * TRANSITION_DURATION);
             update();
         }
+    } else {
+        alert("No entry found...");
     }
     document.body.style.cursor = 'default';
 }

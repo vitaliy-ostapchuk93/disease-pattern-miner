@@ -104,6 +104,13 @@ public class ICDSequence implements Serializable {
     }
 
     public String getFormatedSeqSPMF(int daysInBetween) {
+        String sequence = getSequenceOfItemsets(daysInBetween).stream()
+                .map(itemset -> itemset.stream().map(group -> String.valueOf(group.ordinal()))
+                        .collect(Collectors.joining(" ")))
+                .collect(Collectors.joining(" -1 "));
+
+
+        /*
         StringBuilder seq = new StringBuilder();
 
         for (SortedSet<DiagnosesGroup> itemset : getSequenceOfItemsets(daysInBetween)) {
@@ -113,7 +120,11 @@ public class ICDSequence implements Serializable {
             seq.append("-1 ");
         }
         seq.append("-2");
+
         return seq.toString();
+         */
+
+        return sequence + " -2";
     }
 
     public String getFormatedSeqMGSF() {

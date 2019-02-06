@@ -44,6 +44,7 @@ public class ResultsMapper {
     }
 
     public ImmutableTable<String, GenderAgeGroup, ResultsEntry> getFilteredResultsTable() {
+
         ImmutableTable.Builder<String, GenderAgeGroup, ResultsEntry> sortedBuilder = ImmutableTable.builder();
 
         for (Table.Cell<String, GenderAgeGroup, ResultsEntry> cell : getTableCellComporator().reverse().sortedCopy(resultsTable.cellSet())) {
@@ -60,18 +61,29 @@ public class ResultsMapper {
 
         //update highest sup && highest pattern length
         if (filteredResults.cellSet().size() >= 2) {
-            ResultsEntry maxRelEntry = Collections.max(filteredResults.cellSet(), Comparator.comparingDouble(o -> Objects.requireNonNull(o.getValue()).getRelSupportValue())).getValue();
-            if (maxRelEntry != null) {
-                setHighestRelSupValue(maxRelEntry.getRelSupportValue());
+            OptionalDouble maxRel = filteredResults.cellSet().stream()
+                    .mapToDouble(cell -> Objects.requireNonNull(cell.getValue()).getRelSupportValue())
+                    .max();
+
+            if (maxRel.isPresent()) {
+                setHighestRelSupValue((float) maxRel.getAsDouble());
             }
 
-            ResultsEntry maxAbsEntry = Collections.max(filteredResults.cellSet(), Comparator.comparingInt(o -> Objects.requireNonNull(o.getValue()).getAbsSupportValue())).getValue();
-            if (maxAbsEntry != null) {
-                setHighestAbsSupValue(maxAbsEntry.getAbsSupportValue());
+            OptionalInt maxAbs = filteredResults.cellSet().stream()
+                    .mapToInt(cell -> Objects.requireNonNull(cell.getValue()).getAbsSupportValue())
+                    .max();
+
+            if (maxAbs.isPresent()) {
+                setHighestAbsSupValue(maxAbs.getAsInt());
             }
 
-            String longestPattern = Collections.max(filteredResults.rowKeySet(), Comparator.comparingInt(o -> Objects.requireNonNull(o).split(" ").length));
-            setHighestPatternLength(longestPattern.split(" ").length);
+            OptionalInt maxPatternKey = filteredResults.rowKeySet().stream()
+                    .mapToInt(key -> key.split(" ").length)
+                    .max();
+
+            if (maxPatternKey.isPresent()) {
+                setHighestPatternLength(maxPatternKey.getAsInt());
+            }
         }
 
         //update group keys
@@ -464,6 +476,14 @@ public class ResultsMapper {
         SortedMap<GenderAgeGroup, ResultsEntry> row = resultsTable.row(seqKey);
 
         if (row.size() >= 6) {
+            /*
+            Map<Gender, List<ResultsEntry>> genderListMap = row.entrySet().stream()
+                    .collect(Collectors.groupingBy(entry -> entry.getKey().getGender(),
+                            Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
+
+            */
+
+
             double[] males = new double[10];
             double[] females = new double[10];
 

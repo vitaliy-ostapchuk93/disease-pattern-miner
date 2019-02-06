@@ -52,16 +52,31 @@
                             <div class="field">
                                 <label class="label">Pattern</label>
                                 <div class="control">
+
                                     <a class="button has-background-link" style="border:none;"
                                        data-tooltip="${requestScope.MAPPER.getPatternFormatted(requestScope.patternKey)}">
                                         <div class="buttons has-addons">
-                                            <c:forEach var='pattern'
+                                            <c:forEach var='item'
                                                        items='${requestScope.MAPPER.getPatternArray(requestScope.patternKey)}'>
-                                    <span class="button"
-                                          style="background-color: ${requestScope.MAPPER.getPatternColor(pattern)}">${pattern}</span>
+                                                <c:if test="${item eq '-1'}">
+                            <span class="button"
+                                  style="background-color: ${requestScope.MAPPER.getPatternColor(item)}; border-right: 5px solid #3273dc; border-left: 5px solid #3273dc;">${item}</span>
+                                                </c:if>
+                                                <c:if test="${item ne '-1'}">
+                            <span class="button"
+                                  style="background-color: ${requestScope.MAPPER.getPatternColor(item)}">${item}</span>
+                                                </c:if>
+
                                             </c:forEach>
                                         </div>
                                     </a>
+
+                                    <c:if test="${requestScope.MAPPER.tTestGenderDifference(requestScope.patternKey) > 0 and requestScope.MAPPER.tTestGenderDifference(requestScope.patternKey) <= 0.05}">
+                                <span class="button is-pulled-right" style="border-right: 5px; border-left: 5px;"
+                                      data-tooltip="t-Test is indicating difference in gender-groups.">
+                                    <i class="fas fa-user-circle"></i>
+                                </span>
+                                    </c:if>
                                 </div>
                             </div>
                         </article>

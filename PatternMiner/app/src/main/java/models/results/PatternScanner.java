@@ -358,15 +358,12 @@ public class PatternScanner {
         String commonCodesFilePath = getCommonCodesFilePath(entry);
         String icdLinksFilePath = getFullIcdLinksFilePath(entry);
 
-
         if (!entry.isInverseSearch()) {
             boolean checkCommonCodes = checkIfFileCreated(commonCodesFilePath);
             boolean checkIcdLinks = checkIfFileCreated(icdLinksFilePath);
 
-
             if (!checkCommonCodes || !checkIcdLinks) {
                 try {
-
                     DateTime timeStart = DateTime.now();
 
                     Set<ICDSequence> icdSequences = StreamEx.ofLines(Paths.get(entry.getGroupFileOfResult().getPath()))
@@ -409,13 +406,9 @@ public class PatternScanner {
                 } catch (IOException e) {
                     LOGGER.warning(e.getMessage());
                 }
-
             }
-
-
         }
 
         entry.setInverseSearch(true);
-
     }
 }
