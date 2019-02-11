@@ -1,14 +1,19 @@
 package models.data;
 
-import java.util.Arrays;
+import org.joda.time.DateTime;
 
-public class ICDTransaction {
-    private String id;
-    private ICDEntry entry;
+import java.io.Serializable;
 
-    public ICDTransaction(String[] transaction) {
-        this.id = transaction[0];
-        this.entry = new ICDEntry(transaction[1], Arrays.copyOfRange(transaction, 2, transaction.length));
+public class ICDTransaction implements Serializable {
+
+    private final String group;
+    private final String id;
+    private final ICDEntry entry;
+
+    public ICDTransaction(String group, String id, String timestamp, String[] codes) {
+        this.group = group;
+        this.id = id;
+        this.entry = new ICDEntry(timestamp, codes);
     }
 
     public String getId() {
@@ -17,5 +22,31 @@ public class ICDTransaction {
 
     public ICDEntry getEntry() {
         return entry;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public GenderAgeGroup getGenderAgeGroup() {
+        return new GenderAgeGroup(getGender(), getAge());
+    }
+
+    public int getAge() {
+        return Integer.parseInt(this.group, 1, 1, 10);
+    }
+
+    public Gender getGender() throws UnsupportedOperationException {
+        if (group.startsWith("f")) {
+            return Gender.FEMALE;
+        }
+        if (group.startsWith("m")) {
+            return Gender.MALE;
+        }
+        throw new UnsupportedOperationException("Gender group string does not match!");
+    }
+
+    public DateTime getTimestamp() {
+        return this.entry.getDate();
     }
 }

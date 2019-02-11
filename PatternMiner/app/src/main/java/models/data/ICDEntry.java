@@ -6,26 +6,25 @@ import org.joda.time.format.DateTimeFormatter;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 
 public class ICDEntry implements Serializable, Comparable<ICDEntry> {
     private final DateTime date;
-    private final List<ICDCode> icdCodes;
+    private final Set<ICDCode> icdCodes;
 
     public ICDEntry(String time, String[] codes) {
         DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyyMMdd");
         this.date = formatter.parseDateTime(time);
-        this.icdCodes = Arrays.stream(codes).map(ICDCode::new).collect(Collectors.toList());
+        this.icdCodes = Arrays.stream(codes).map(ICDCode::new).collect(Collectors.toSet());
     }
 
     public DateTime getDate() {
         return date;
     }
 
-    public List<ICDCode> getIcdCodes() {
+    public Set<ICDCode> getIcdCodes() {
         return icdCodes;
     }
 
