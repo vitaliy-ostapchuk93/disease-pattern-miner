@@ -5,7 +5,7 @@
 
 # Disease Pattern Miner <img src="https://github.com/vitaliy-ostapchuk93/disease-pattern-miner/blob/master/PatternMiner/app/src/main/webapp/resources/static/img/logo.png" width="48">
 
-**Disease Pattern Miner** is a free, open-source mining-framework for interactively discovering sequential patterns in medical health record datasets.
+**Disease Pattern Miner** is a free, open-source mining framework for interactively discovering sequential disease patterns in medical health record datasets.
 
 ******
 
