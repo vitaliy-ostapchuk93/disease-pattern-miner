@@ -1,4 +1,4 @@
-[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](disease-pattern-miner/blob/master/LICENCE.md)
+[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](blob/master/LICENCE.md)
 [![Demo http://pwas.tmu.edu.tw/icdminer/](https://img.shields.io/website-up-down-green-red/http/shields.io.svg)](http://pwas.tmu.edu.tw/icdminer/)
 [![Open Source Love svg2](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/)
 
