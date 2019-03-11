@@ -3,6 +3,7 @@ package models.data;
 import org.joda.time.DateTime;
 
 import java.io.Serializable;
+import java.util.Comparator;
 
 public class ICDTransaction implements Serializable {
 
@@ -12,6 +13,12 @@ public class ICDTransaction implements Serializable {
 
     public ICDTransaction(String group, String id, String timestamp, String[] codes) {
         this.group = group;
+        this.id = id;
+        this.entry = new ICDEntry(timestamp, codes);
+    }
+
+    public ICDTransaction(String id, String timestamp, String[] codes) {
+        this.group = null;
         this.id = id;
         this.entry = new ICDEntry(timestamp, codes);
     }
@@ -49,4 +56,15 @@ public class ICDTransaction implements Serializable {
     public DateTime getTimestamp() {
         return this.entry.getDate();
     }
+
+    public static Comparator<ICDTransaction> getComporator() {
+        Comparator<ICDTransaction> comparator = Comparator.comparing(ICDTransaction::getGender);
+        comparator = comparator.thenComparing(ICDTransaction::getAge);
+        comparator = comparator.thenComparing(ICDTransaction::getId);
+        comparator = comparator.thenComparing(ICDTransaction::getTimestamp);
+
+        return comparator;
+    }
+
+
 }

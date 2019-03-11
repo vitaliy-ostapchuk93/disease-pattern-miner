@@ -86,7 +86,7 @@
                                     <p>Results from <b>15 different sequence-mining algorithms</b> from different
                                         libraries collected in a single table.</p>
                                     <div class="section">
-                                        <img src="<c:url value="/resources/static/img/pattern-table.PNG"/>"
+                                        <img src="<c:url value="/resources/static/img/pattern-table-new.PNG"/>"
                                              type="image/x-icon">
                                     </div>
                                 </li>
@@ -97,7 +97,7 @@
                                     <p>Interactive methods to explore <b>relations between diseases</b> in different
                                         gender-age-groups.</p>
                                     <div class="section">
-                                        <img src="<c:url value="/resources/static/img/sankey_2%204%206_5M.png"/>"
+                                        <img src="<c:url value="/resources/static/img/sankey_15%20-1%207%20-1%209_0M.PNG"/>"
                                              type="image/x-icon">
                                     </div>
                                 </li>

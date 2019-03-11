@@ -11,6 +11,7 @@ import models.data.GroupDataFile;
 import models.data.SEQFileType;
 import models.data.SeqDataFile;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class ClasSPTask extends AbstractAlgorithmTask {
@@ -24,6 +25,8 @@ public class ClasSPTask extends AbstractAlgorithmTask {
         SeqDataFile input = groupFile.getSeqDataFile(SEQFileType.SEQ_SPMF);
         float minSupp = getMinSup(input);
         DataFile output = input.getOutputResultFile(AlgorithmType.ClaSP, minSupp);
+
+        LOGGER.warning(output.getPath());
 
         boolean keepPatterns = (boolean) algorithmParameters.getOrDefault("Keep Patterns", true);
         boolean verbose = (boolean) algorithmParameters.getOrDefault("Verbose", true);
@@ -43,7 +46,7 @@ public class ClasSPTask extends AbstractAlgorithmTask {
             algorithm.runAlgorithm(sequenceDatabase, keepPatterns, verbose, output.getPath(), outputSequenceIdentifiers);
             algorithm.printStatistics();
             return output;
-        } catch (Exception e) {
+        } catch (IOException e) {
             LOGGER.warning(e.getMessage());
         }
         return null;

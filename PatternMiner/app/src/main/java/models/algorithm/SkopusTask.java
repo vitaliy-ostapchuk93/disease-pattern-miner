@@ -47,10 +47,10 @@ public class SkopusTask extends AbstractAlgorithmTask {
         Map<String, Object> params = new HashMap<>();
 
         params.put("Minimal Support", 0.01f);
-        params.put("Use Leverage Measure Instead Of Support", false);
+        params.put("Use Leverage Measure Instead Of Support", true);
         params.put("Use Smoothed Values", false);
         params.put("Smoothing Coefficient", 0.5);
-        params.put("Maximum Sequential Pattern Length", 10);
+        params.put("Maximum Sequential Pattern Length", 5);
 
         return params;
     }

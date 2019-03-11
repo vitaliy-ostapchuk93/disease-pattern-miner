@@ -7,8 +7,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class GroupDataFile extends DataFile {
     private final static Logger LOGGER = Logger.getLogger(GroupDataFile.class.getName());
@@ -185,5 +188,88 @@ public class GroupDataFile extends DataFile {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public int getDistinctCodesCount() {
+        return getDistinctPatients().size();
+    }
+
+    public Set<String> getDistinctPatients() {
+        Set<String> patientIDs = new HashSet<>();
+
+        LineIterator it = null;
+        try {
+            it = FileUtils.lineIterator(this, "UTF-8");
+            while (it.hasNext()) {
+                String line = it.nextLine();
+                String patientID = line.split(COMMA)[0];
+                patientIDs.add(patientID);
+            }
+            it.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return patientIDs;
+    }
+
+    public int getDistinctPatientsCount() {
+        return getDistinctCodes().size();
+    }
+
+    public Set<ICDCode> getDistinctCodes() {
+        Set<ICDCode> codes = new HashSet<>();
+
+        LineIterator it = null;
+        try {
+            it = FileUtils.lineIterator(this, "UTF-8");
+            while (it.hasNext()) {
+                String line = it.nextLine();
+                String[] p = line.split(COMMA);
+                String[] icds = Arrays.copyOfRange(p, 2, p.length);
+                codes.addAll(Arrays.stream(icds).map(ICDCode::new).collect(Collectors.toSet()));
+            }
+            it.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return codes;
+    }
+
+    public int validSequenceCount() {
+        int count = 0;
+
+        LineIterator it = null;
+        try {
+            it = FileUtils.lineIterator(this, "UTF-8");
+
+            ICDSequence sequence = null;
+            while (it.hasNext()) {
+                String line = it.nextLine();
+                String[] p = line.split(COMMA);
+
+                //first sequence
+                if (sequence == null) {
+                    sequence = new ICDSequence(p[0]);
+                }
+
+                //different sequence id
+                if (!p[0].equals(sequence.getId())) {
+                    if (sequence.getFilteredDiagnosesCount() > 2) {
+                        count++;
+                    }
+                    sequence = new ICDSequence(p[0]);
+                }
+
+                //same sequence
+                if (p.length >= 2) {
+                    sequence.addDiagnoses(p[1], Arrays.copyOfRange(p, 2, p.length));
+                }
+            }
+            it.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return count;
     }
 }

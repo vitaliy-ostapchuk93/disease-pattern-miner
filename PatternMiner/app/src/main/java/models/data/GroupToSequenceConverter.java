@@ -131,7 +131,9 @@ public class GroupToSequenceConverter {
 
                 //different sequence id
                 if (!p[0].equals(sequence.getId())) {
-                    writeSequenceToFile(output, sequence, type);
+                    if (sequence.getFilteredDiagnosesCount() > 2) {
+                        writeSequenceToFile(output, sequence, type);
+                    }
                     sequence = new ICDSequence(p[0]);
                 }
 

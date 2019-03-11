@@ -88,7 +88,7 @@ public class ICDSequence implements Serializable {
     }
 
     public long getFilteredDiagnosesCount() {
-        return diagnoses.stream().mapToLong(entry -> entry.getFilteredCodes().size()).sum();
+        return diagnoses.stream().mapToLong(entry -> entry.getFilteredDiagnoses().size()).sum();
     }
 
     public String getId() {
@@ -109,22 +109,7 @@ public class ICDSequence implements Serializable {
                         .collect(Collectors.joining(" ")))
                 .collect(Collectors.joining(" -1 "));
 
-
-        /*
-        StringBuilder seq = new StringBuilder();
-
-        for (SortedSet<DiagnosesGroup> itemset : getSequenceOfItemsets(daysInBetween)) {
-            for (DiagnosesGroup item : itemset) {
-                seq.append(item.ordinal()).append(" ");
-            }
-            seq.append("-1 ");
-        }
-        seq.append("-2");
-
-        return seq.toString();
-         */
-
-        return sequence + " -2";
+        return sequence + " -1 -2";
     }
 
     public String getFormatedSeqMGSF() {

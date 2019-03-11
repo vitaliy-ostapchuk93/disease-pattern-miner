@@ -151,6 +151,13 @@ public abstract class DataFile extends File implements Serializable {
         stats += "LineCount=" + getFileLineCount() + separator;
         stats += "SizeInBytes=" + length();
 
+        /*
+        if (this instanceof GroupDataFile) {
+            stats +=  separator;
+            stats += "DistinctPatients=" + ((GroupDataFile)this).getDistinctPatientsCount() +separator;
+            stats += "DistinctICDCodes=" + ((GroupDataFile)this).getDistinctCodesCount();
+        }
+         */
         stats += "]";
 
         return stats;

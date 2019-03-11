@@ -43,11 +43,11 @@
 
                 <div class="container is-fluid">
                     <div class="columns">
-                        <div class="column" id="statsMinSup" style="height: 60%;"></div>
-                        <div class="column" id="statsSeqCount" style="height: 60%;"></div>
+                        <div class="column" id="statsMinSup" style="height: 30%;"></div>
+                        <div class="column" id="statsSeqCount" style="height: 30%;"></div>
                     </div>
                     <br>
-                    <div class="colum" id="stats3D" style="height: 80%; padding: initial;"></div>
+                    <div class="colum" id="stats3D" style="height: 40%; padding: initial;"></div>
                     <br>
                 </div>
             </article>

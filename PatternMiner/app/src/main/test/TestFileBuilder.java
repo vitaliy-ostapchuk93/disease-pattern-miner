@@ -12,11 +12,13 @@ public class TestFileBuilder {
     private final static Logger LOGGER = Logger.getLogger(TestFileBuilder.class.getName());
 
     public static void main(String[] arg) {
-        File input = new File("C:\\Users\\vital\\Desktop\\csv\\all\\cd_all.csv");
+        File input = new File("C:\\Users\\vital\\Desktop\\csv\\all\\testDiseasesOfInterest.csv");
         File outputDir = new File("C:\\Users\\vital\\Desktop\\csv\\all\\");
 
         //createSubsets(input, outputDir);
-        createSubsetsOfInterest(input, outputDir);
+        MainDataFile mainDataFile = createDataFiles(input, outputDir);
+
+        //createSubsetsOfInterest(input, outputDir);
     }
 
     public static void createSubsetsOfInterest(File input, File outputDir) {

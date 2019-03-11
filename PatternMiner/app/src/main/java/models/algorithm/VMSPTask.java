@@ -42,8 +42,8 @@ public class VMSPTask extends AbstractAlgorithmTask {
         Map<String, Object> params = new HashMap<>();
 
         params.put("Minimal Support", 0.01f);
-        params.put("Maximum Pattern Length", 4);
-        params.put("Gap", 4);
+        params.put("Maximum Pattern Length", 5);
+        params.put("Gap", 2);
 
         return params;
     }
