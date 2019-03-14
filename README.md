@@ -27,9 +27,13 @@
 
 ## System Requirements & Recommendations
 
-- The application requires JDK version 11.0.1 or higher.
-- The application requires at least 8 GB of RAM, recommended is at least 16. (Make sure the server container can access it!)
-- It is recommended to provide at least 40GB of SSD HardDrive space. This might depend on the dataset!
+A machine with:
+- 4 GB of RAM, although at least 16 GB is recommended. Make sure the server container can access it!
+- 10 GB of drive space, although at least 40 GB is recommended. This might depend on the dataset.
+
+The following software installed:
+- Java 11 or 12, Java Development Kit (JDK)
+- Apache Tomcat as servlet container.
 
 ******
 
@@ -38,7 +42,7 @@
 1) Make sure you got all system and software requirements!
 2) Clone the repository.
 3) Build a .war-file of the project.
-4) Deploy the .war-file to the server (e.g. Tomcat)
+4) Deploy the .war-file to the server
 
 ******
 
