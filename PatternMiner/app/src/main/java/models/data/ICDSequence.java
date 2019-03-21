@@ -160,7 +160,9 @@ public class ICDSequence implements Serializable {
             newD = entry.getDate();
 
             if (oldD != null && Days.daysBetween(oldD, newD).getDays() > daysInBetween) {
-                sequeceItemsetList.add(itemset);
+                if (!itemset.isEmpty()) {
+                    sequeceItemsetList.add(itemset);
+                }
                 itemset = new TreeSet<>(Comparator.comparingInt(Enum::ordinal));
             }
             itemset.addAll(entry.getFilteredDiagnoses());
