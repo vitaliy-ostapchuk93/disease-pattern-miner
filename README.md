@@ -25,15 +25,48 @@
 The web aplication is designed to perform sequential mining tasks on EHR datasets. 
 The results can be viewed in a table and explored in an interactive Sankey chart.
 
-The dataset for upload has to match the following csv-file format:
+The dataset for upload has to match the following csv-file format (example full set):
 ```
-GENDER-AGE-GROUP, PATIENT-ID, YYYYMMDD, ICD-9-CM (1-3)
+GENDER-AGE-GROUP, PATIENT-ID, YYYYMMDD, (min 1, max 3 ) ICD-9-CM 
 
 f0,EW75937189,20010120,0740,4661,
-f0,FS54767684,20010107,37311,,
-f0,CT58401081,20010120,V202,,
+f0,EW75937189,20010107,37311,,
+f0,EW75937189,20010120,V202,,
 f0,BU45121182,20010103,4659,7806,
-f0,KT61521480,20010109,486,94400,
+f1,KT61521480,20010109,486,94400,
+...
+```
+
+The application will filter and split the data in gender-age-group files (example f0-group set):
+```
+<PATIENT-ID>, <YYYYMMDD>, <min_1 max_3 ICD-9-CM codes>
+
+EW75937189,20010120,0740,4661,
+EW75937189,20010107,37311,,
+BU45121182,20010103,4659,7806,
+...
+```
+
+Each gender-age-group set will befiltered & converted to a seq-file for the mining using the ICD-9-CM hierarchy.
+Positive integers are ordinal values for the ICD-9-CM chapters. -1 represents a TIME_GAP (2 weeks). -2 represents the end of the sequence.
+```
+<ICD-9-CM CHAPTERS ORDINALS> <ICD-9-CM CHAPTERS ORDINALS> -1 ... <ICD-9-CM CHAPTERS ORDINALS> -1 -2
+
+5 -1 5 -1 5 -1 5 -1 5 -1 7 -1 9 13 15 -1 9 -1 9 -1 -2
+7 -1 7 -1 7 -1 7 -1 5 -1 2 7 9 -1 5 7 -1 7 -1 5 -1 5 15 -1 7 -1 -2
+7 9 -1 7 9 -1 7 9 -1 7 9 -1 7 9 -1 7 9 -1 7 9 11 -1 9 -1 -2
+...
+```
+
+Many different sequence mining algorithms can be used. For each mining task a result file is produced:
+```
+<FREQUENT SEQUENCE PATTERN> #SUP: <ABSOLUTE SUPPORT OF PATTERN>
+
+5 7 -1 7 -1 7 -1 #SUP: 3635
+5 7 -1 7 -1 #SUP: 3824
+5 7 -1 #SUP: 4000
+5 -1 5 -1 7 -1 #SUP: 3551
+...
 ```
 
 
