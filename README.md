@@ -22,8 +22,22 @@
 
 ## Documentation
 
+The web aplication is designed to perform sequential mining tasks on EHR datasets. 
+The results can be viewed in a table and explored in an interactive Sankey chart.
+
+The dataset for upload has to match the following csv-file format:
+```
+GENDER-AGE-GROUP, PATIENT-ID, YYYYMMDD, ICD-9-CM (1-3)
+
+f0,EW75937189,20010120,0740,4661,
+f0,FS54767684,20010107,37311,,
+f0,CT58401081,20010120,V202,,
+f0,BU45121182,20010103,4659,7806,
+f0,KT61521480,20010109,486,94400,
+```
 
 
+For more detailed examples and project insights please look into the publications or contact author.
 
 
 ******
